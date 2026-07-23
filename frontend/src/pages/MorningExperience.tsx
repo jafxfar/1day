@@ -66,43 +66,43 @@ export default function MorningExperience() {
       <div className="w-full max-w-md flex flex-col min-h-screen">
 
         {/* Header */}
-        <div className="flex items-center justify-between px-4 pt-10 pb-2">
+        <div className="flex items-center justify-between px-2 pt-2 pb-0">
           <button
             onClick={() => step > 0 ? setStep(s => s - 1) : navigate('/welcome')}
-            className="p-2 rounded-xl hover:bg-accent transition-colors"
+            className="py-2 rounded-xl hover:bg-accent transition-colors"
           >
-            <ChevronLeft className="w-5 h-5 text-foreground" />
+            <ChevronLeft className="w-1.5 h-1.5 text-foreground" />
           </button>
-          <div className="flex gap-1.5 items-center">
+          <div className="flex gap-0.5 items-center">
             {STEPS.map((_, i) => (
-              <div key={i} className={`h-1.5 rounded-full transition-all duration-300 ${
-                i < step ? 'w-4 bg-primary' : i === step ? 'w-6 bg-primary' : 'w-1.5 bg-muted'
+              <div key={i} className={`h-0.5 rounded-full transition-all duration-300 ${
+                i < step ? 'w-1.5 bg-primary' : i === step ? 'w-2 bg-primary' : 'w-0.5 bg-muted'
               }`} />
             ))}
           </div>
           <div className="w-9" />
         </div>
 
-        <p className="px-6 text-sm text-muted-foreground">{today}</p>
+        <p className="px-2 text-sm text-muted-foreground">{today}</p>
 
         {/* Content */}
-        <div className="flex-1 px-6 py-6">
-          <div className="space-y-1 mb-10">
+        <div className="flex-1 px-2 py-2">
+          <div className="space-y-1 mb-4">
             <h1 className="text-3xl font-bold text-foreground">{current.title}</h1>
             <p className="text-muted-foreground">{current.subtitle}</p>
           </div>
 
           {/* Step 0 — Sleep */}
           {step === 0 && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 mb-2">
-                <Moon className="w-4 h-4 text-muted-foreground" />
+            <div className="space-y-1">
+              <div className="flex items-center gap-1 mb-1">
+                <Moon className="w-1.5 h-1.5 text-muted-foreground" />
                 <span className="text-sm text-muted-foreground">Hours of sleep last night</span>
               </div>
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-4 gap-[8px]">
                 {SLEEP_OPTIONS.map(h => (
                   <button key={h} onClick={() => setSleep(h)}
-                    className={`py-4 rounded-2xl text-base font-bold transition-all ${
+                    className={`py-1.5 rounded-2xl text-base font-bold transition-all ${
                       sleepHours === h
                         ? 'bg-primary text-primary-foreground shadow-retool-sm scale-105'
                         : 'bg-card border border-border text-foreground hover:border-primary/40'
@@ -112,7 +112,7 @@ export default function MorningExperience() {
                   </button>
                 ))}
               </div>
-              <p className="text-center text-sm text-muted-foreground mt-4 font-medium">
+              <p className="text-center text-sm text-muted-foreground mt-1.5 font-medium">
                 {sleepHours >= 8 ? '✅ Excellent rest!' : sleepHours >= 7 ? '👍 Good sleep' : sleepHours >= 6 ? '⚠️ A bit short' : '😴 Need more rest'}
               </p>
             </div>
@@ -120,7 +120,7 @@ export default function MorningExperience() {
 
           {/* Step 1 — Energy */}
           {step === 1 && (
-            <div className="space-y-8">
+            <div className="space-y-2">
               <div className="text-center">
                 <span className="text-7xl font-bold text-foreground">{energy[0]}</span>
                 <span className="text-2xl text-muted-foreground">/10</span>
@@ -135,11 +135,11 @@ export default function MorningExperience() {
 
           {/* Step 2 — Mood */}
           {step === 2 && (
-            <div className="space-y-6">
-              <div className="grid grid-cols-5 gap-2">
+            <div className="space-y-2">
+              <div className="grid grid-cols-5 gap-[8px]">
                 {MOODS.map(({ value, emoji, label }) => (
                   <button key={value} onClick={() => setMood(value)}
-                    className={`flex flex-col items-center gap-1.5 py-4 rounded-2xl border transition-all ${
+                    className={`flex flex-col items-center gap-1.5 py-1 rounded-2xl border transition-all ${
                       mood === value
                         ? 'border-primary bg-primary/5 scale-105 shadow-retool-sm'
                         : 'border-border bg-card hover:border-primary/40'
@@ -150,7 +150,7 @@ export default function MorningExperience() {
                   </button>
                 ))}
               </div>
-              <div className="bg-card border border-border rounded-2xl p-4 text-center">
+              <div className="bg-card border border-border rounded-2xl p-1 text-center">
                 <p className="font-semibold text-foreground text-lg">
                   {MOODS.find(m => m.value === mood)?.emoji} {MOODS.find(m => m.value === mood)?.label}
                 </p>
@@ -165,18 +165,18 @@ export default function MorningExperience() {
 
           {/* Step 3 — Focus */}
           {step === 3 && (
-            <div className="space-y-4">
+            <div className="space-y-[14px]">
               <Input
                 placeholder="Write your main focus for today..."
                 value={focus}
                 onChange={e => setFocus(e.target.value)}
-                className="h-12 text-base rounded-xl"
+                className="h-4 text-base bg-background!  rounded-xl"
               />
               <p className="text-xs text-muted-foreground font-medium">Quick picks:</p>
-              <div className="space-y-2">
+              <div className="space-y-[8px]">
                 {FOCUS_SUGGESTIONS.map(s => (
                   <button key={s} onClick={() => setFocus(s)}
-                    className={`w-full text-left px-4 py-3 rounded-xl border text-sm transition-all ${
+                    className={`w-full text-left p-1 rounded-xl border text-sm transition-all ${
                       focus === s
                         ? 'border-primary bg-primary/5 text-foreground font-medium'
                         : 'border-border bg-card text-muted-foreground hover:text-foreground hover:border-primary/30'
@@ -191,9 +191,9 @@ export default function MorningExperience() {
         </div>
 
         {/* CTA */}
-        <div className="px-6 pb-10">
+        <div className="px-2 pb-3">
           <Button
-            className="w-full h-12 text-base font-semibold rounded-2xl"
+            className="w-full h-4 text-base font-semibold rounded-2xl"
             onClick={() => void handleNext()}
             disabled={saving}
           >
