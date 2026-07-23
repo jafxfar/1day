@@ -43,7 +43,7 @@ const db = new Pool({ connectionString: process.env['DATABASE_URL'] })
 // ─── App ──────────────────────────────────────────────────────────────────
 
 const app  = express()
-const PORT = Number(process.env['PORT'] ?? 3001)
+const PORT = Number(process.env['PORT'] ?? 3000)
 
 app.use(cors({
   origin: process.env['FRONTEND_URL'] ?? 'http://localhost:5173',

@@ -18,8 +18,8 @@ export default function App() {
     <BrowserRouter>
       <AppProvider>
         <Routes>
-          <Route path="/" element={<Navigate to="/welcome" replace />} />
           <Route path="/welcome" element={<Welcome />} />
+          <Route path="/" element={<Navigate to="/welcome" replace />} />
           <Route path="/morning" element={<MorningExperience />} />
           <Route path="/evening" element={<EveningReflection />} />
           <Route path="/dashboard" element={<Dashboard />} />

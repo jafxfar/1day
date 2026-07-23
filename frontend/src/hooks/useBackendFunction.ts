@@ -12,7 +12,7 @@
  */
 import { useState, useCallback } from 'react'
 
-const API_BASE = import.meta.env['VITE_API_URL'] ?? 'http://localhost:3001'
+const API_BASE = import.meta.env['VITE_API_URL'] ?? 'http://localhost:3000'
 
 // ─── Path → endpoint mapping ──────────────────────────────────────────────
 // Mirrors the Express routes defined in server.ts
