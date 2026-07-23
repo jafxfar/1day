@@ -7,7 +7,7 @@ import { useGetHabits } from '../hooks/backend/habits'
 import { useGetJournalEntries } from '../hooks/backend/journal'
 import { Layout } from '../components/Layout'
 import { Badge } from '../components/ui/badge'
-import { ChevronRight, Target, CheckSquare2, BookOpen, Flame, Bot, Bell, Moon, Lock, Settings, TrendingUp, Calendar } from 'lucide-react'
+import { ChevronRight, Target, CheckSquare2, BookOpen, Flame, Bot, Bell, Moon, Lock, Settings, TrendingUp, Calendar, LogOut } from 'lucide-react'
 import type { Goal, Habit, JournalEntry } from '../lib/types'
 import { cast } from '../lib/types'
 
@@ -28,7 +28,7 @@ const MVP_CHECKLIST = [
 
 export default function Profile() {
   const navigate = useNavigate()
-  const { userName, userInitial, userEmail, morningCheckin, hasCompletedMorning } = useApp()
+  const { userName, userInitial, userEmail, morningCheckin, hasCompletedMorning, logout } = useApp()
 
   const { data: rawGoals,   trigger: fetchGoals   } = useGetGoals()
   const { data: rawHabits,  trigger: fetchHabits  } = useGetHabits()
@@ -62,6 +62,7 @@ export default function Profile() {
     { icon: Moon,     label: 'Appearance',    onClick: () => {} },
     { icon: Lock,     label: 'Privacy',       onClick: () => {} },
     { icon: Settings, label: 'Settings',      onClick: () => {} },
+    { icon: LogOut,   label: 'Log Out',       onClick: async () => { await logout(); navigate('/welcome') } },
   ]
 
   return (

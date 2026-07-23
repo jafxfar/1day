@@ -1,5 +1,6 @@
 
 import { useNavigate } from 'react-router-dom'
+import { useApp } from '../context/AppContext'
 import { Button } from '../components/ui/button'
 import { Sparkles, Target, CheckSquare2, BookOpen, Bot } from 'lucide-react'
 
@@ -12,6 +13,23 @@ const FEATURES = [
 
 export default function Welcome() {
   const navigate = useNavigate()
+  const { user } = useApp()
+
+  const handleStartDay = () => {
+    if (user) {
+      navigate('/morning')
+    } else {
+      navigate('/auth?redirect=/morning')
+    }
+  }
+
+  const handleGoDashboard = () => {
+    if (user) {
+      navigate('/dashboard')
+    } else {
+      navigate('/auth?redirect=/dashboard')
+    }
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-background px-3 py-safe">
@@ -55,15 +73,15 @@ export default function Welcome() {
       {/* Actions */}
       <div className="w-full space-y-1 pb-12 pt-12">
         <Button
-          className="w-full h-4 text-base font-semibold rounded-2xl"
-          onClick={() => navigate('/morning')}
+          className="w-full h-11 text-base font-semibold rounded-2xl"
+          onClick={handleStartDay}
         >
           Start Your Day ✨
         </Button>
         <Button
           variant="ghost"
-          className="w-full h-4 text-base rounded-2xl"
-          onClick={() => navigate('/dashboard')}
+          className="w-full h-11 text-base rounded-2xl"
+          onClick={handleGoDashboard}
         >
           Go to Dashboard
         </Button>
