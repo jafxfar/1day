@@ -5,7 +5,6 @@ import { Layout } from '../components/Layout'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { Send, Bot } from 'lucide-react'
-import { cast } from '../lib/types'
 
 interface AIMessage {
   id: string
@@ -44,7 +43,7 @@ const INITIAL_MESSAGES: AIMessage[] = [
 ]
 
 export default function AICoach() {
-  const { data: rawHabits, trigger: fetchHabits } = useGetHabits()
+  const { trigger: fetchHabits } = useGetHabits()
 
   const [messages, setMessages] = useState<AIMessage[]>(INITIAL_MESSAGES)
   const [input,    setInput]    = useState('')
@@ -55,9 +54,6 @@ export default function AICoach() {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, isTyping])
-
-  const habits          = cast.habits(rawHabits)
-  const completedHabits = habits.filter(h => h.completedToday).length
 
   const sendMessage = async (text: string) => {
     if (!text.trim() || isTyping) return
