@@ -8,7 +8,7 @@
  * Per-page data (goals, habits, journal) lives in those page components.
  */
 import { createContext, useContext, useEffect, type ReactNode } from 'react'
-import { useCurrentUser } from '../hooks/useCurrentUser'
+import { useAuthContext } from './AuthContext'
 import { useGetTodayCheckins } from '../hooks/backend/checkins'
 import type { MorningCheckin, EveningReflection, TodayCheckins } from '../lib/types'
 import { cast } from '../lib/types'
@@ -32,7 +32,7 @@ interface AppContextValue {
 const AppContext = createContext<AppContextValue | null>(null)
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const { user }     = useCurrentUser()
+  const { user }     = useAuthContext()
   const { data: rawCheckins, loading: loadingCheckins, trigger: fetchCheckins } = useGetTodayCheckins()
 
   // Fetch once on mount

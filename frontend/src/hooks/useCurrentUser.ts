@@ -1,9 +1,12 @@
-import { useState, useEffect } from 'react'
-import { isIframeHosted } from './iframeHostedMode'
-import { requestFromParent } from './postMessageRpc'
-import { getXsrfToken, XSRF_HEADER_NAME } from './xsrfUtils'
+/**
+ * useCurrentUser — fetches the authenticated user from the backend.
+ * Replaces the Retool-specific version with a direct /api/auth/me call.
+ */
+import { useState, useEffect, useCallback } from 'react'
 
-type CurrentUser = {
+const API_BASE = import.meta.env['VITE_API_URL'] ?? ''
+
+export type CurrentUser = {
   id: number
   email: string
   firstName: string
@@ -17,49 +20,36 @@ type CurrentUser = {
   locale: string
 }
 
-const IFRAME_HOSTED = isIframeHosted()
-const PUBLISHED = import.meta.env['VITE_PUBLISHED_MODE'] === 'true' ? true : false
-
 async function fetchCurrentUser(): Promise<CurrentUser> {
-  if (IFRAME_HOSTED) {
-    // Sandboxed null-origin iframe — no cookies on subresource fetches. Ask the parent broker.
-    const reply = await requestFromParent<{ ok: boolean; user: CurrentUser }>('RR_CURRENT_USER_REQUEST', {})
-    return reply.user
-  }
-  const url = PUBLISHED
-    ? '/_/api/current-user'
-    : `${import.meta.env['BASE_URL']}retool-api/current-user`
-  const init: RequestInit = PUBLISHED
-    ? { headers: { [XSRF_HEADER_NAME]: getXsrfToken() } }
-    : {}
-  const res = await fetch(url, init)
-  if (!res.ok) throw new Error('Failed to fetch current user')
-  return res.json()
+  const res = await fetch(API_BASE + '/api/auth/me', { credentials: 'include' })
+  if (!res.ok) throw new Error('Not authenticated')
+  return res.json() as Promise<CurrentUser>
 }
 
-export function useCurrentUser(): { user: CurrentUser | null; loading: boolean } {
+export function useCurrentUser(): {
+  user: CurrentUser | null
+  loading: boolean
+  refetch: () => void
+} {
   const [user, setUser] = useState<CurrentUser | null>(null)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    let cancelled = false
-
+  const load = useCallback(() => {
+    setLoading(true)
     fetchCurrentUser()
       .then((data) => {
-        if (cancelled) return
         setUser(data)
         setLoading(false)
       })
       .catch(() => {
-        if (cancelled) return
         setUser(null)
         setLoading(false)
       })
-
-    return () => {
-      cancelled = true
-    }
   }, [])
 
-  return { user, loading }
+  useEffect(() => {
+    load()
+  }, [load])
+
+  return { user, loading, refetch: load }
 }
