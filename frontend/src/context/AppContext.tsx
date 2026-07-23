@@ -8,6 +8,7 @@
  */
 import { createContext, useContext, useEffect, type ReactNode } from 'react'
 import { useCurrentUser, type CurrentUser } from '../hooks/useCurrentUser'
+import { useAuthContext } from './AuthContext'
 import { useGetTodayCheckins } from '../hooks/backend/checkins'
 import type { MorningCheckin, EveningReflection, TodayCheckins } from '../lib/types'
 import { cast } from '../lib/types'
