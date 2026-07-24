@@ -5,10 +5,14 @@
  * Replaces the Retool-injected `retoolDb` global with a real pg Pool.
  * Import this module FIRST in server.ts (before any backend functions).
  */
+import 'dotenv/config'
 import { Pool, QueryResult, QueryResultRow } from 'pg'
 
+const rawUrl = process.env['DATABASE_URL']
+const connectionString = rawUrl ? rawUrl.replace('@hostname', '@localhost') : undefined
+
 const pool = new Pool({
-  connectionString: process.env['DATABASE_URL'],
+  connectionString,
   ssl: process.env['DATABASE_SSL'] === 'true'
     ? { rejectUnauthorized: false }
     : false,

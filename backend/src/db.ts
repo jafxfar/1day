@@ -1,9 +1,12 @@
-// src/db.ts
+import 'dotenv/config';
 import { Pool } from 'pg';
 
 // Подключение берется из переменных окружения (.env)
+const rawUrl = process.env.DATABASE_URL;
+const connectionString = rawUrl ? rawUrl.replace('@hostname', '@localhost') : undefined;
+
 export const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString,
 });
 
 export const retoolDb = {

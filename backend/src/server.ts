@@ -1,4 +1,10 @@
 
+import 'dotenv/config'
+
+if (process.env.DATABASE_URL) {
+  process.env.DATABASE_URL = process.env.DATABASE_URL.replace('@hostname', '@localhost')
+}
+
 /**
  * Life OS — Standalone Express Server
  *
@@ -38,7 +44,9 @@ import getBiography        from './biography/getBiography'
 // ─── Also need pg for auth routes ─────────────────────────────────────────
 import { Pool } from 'pg'
 
-const db = new Pool({ connectionString: process.env['DATABASE_URL'] })
+const rawUrl = process.env['DATABASE_URL']
+const connectionString = rawUrl ? rawUrl.replace('@hostname', '@localhost') : undefined
+const db = new Pool({ connectionString })
 
 // ─── App ──────────────────────────────────────────────────────────────────
 
