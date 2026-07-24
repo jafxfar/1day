@@ -9,6 +9,7 @@ import { markAppEvalCompleteEnd } from './publishedPerfBootstrap'
 import './index.css'
 import './darkMode'
 import './inspectorOverlay'
+import { AuthProvider } from './context/AuthContext'
 
 // Derive basename so React Router strips the serving prefix before matching routes.
 // Handles two patterns:
@@ -412,23 +413,25 @@ const root = import.meta.env['VITE_PUBLISHED_MODE']
 markAppEvalCompleteEnd()
 root.render(
   <React.StrictMode>
-   <RetoolAuthProvider>
-    <RetoolAuthGate>
-        {/* Only include NavigationSyncer in bundled code when we are in an iframe and in preview mode */}
-        {import.meta.env['VITE_PUBLISHED_MODE'] && window.self !== window.top && (
-          <NavigationSyncer />
-        )}
-        {import.meta.env['VITE_PUBLISHED_MODE'] ? (
-          <RetoolPublishedErrorBoundary>
-            <App />
-          </RetoolPublishedErrorBoundary>
-        ) : (
-          <RetoolRuntimeErrorBoundary>
-            <App />
-          </RetoolRuntimeErrorBoundary>
-        )}
-    </RetoolAuthGate>
-  </RetoolAuthProvider>
+    <RetoolAuthProvider>
+      <RetoolAuthGate>
+        <AuthProvider>
+          {/* Only include NavigationSyncer in bundled code when we are in an iframe and in preview mode */}
+          {import.meta.env['VITE_PUBLISHED_MODE'] && window.self !== window.top && (
+            <NavigationSyncer />
+          )}
+          {import.meta.env['VITE_PUBLISHED_MODE'] ? (
+            <RetoolPublishedErrorBoundary>
+              <App />
+            </RetoolPublishedErrorBoundary>
+          ) : (
+            <RetoolRuntimeErrorBoundary>
+              <App />
+            </RetoolRuntimeErrorBoundary>
+          )}
+        </AuthProvider>
+      </RetoolAuthGate>
+    </RetoolAuthProvider>
   </React.StrictMode >,
 )
 
