@@ -21,25 +21,25 @@ import { requireAuth, signToken, hashPassword, verifyPassword } from './lib/auth
 import type { AppUser } from './lib/auth'
 
 // ── Backend functions (same files you copied from Retool) ──────────────────
-import getGoals          from './goals/getGoals'
-import createGoal        from './goals/createGoal'
-import updateGoal        from './goals/updateGoal'
-import deleteGoal        from './goals/deleteGoal'
+import getGoals from './goals/getGoals'
+import createGoal from './goals/createGoal'
+import updateGoal from './goals/updateGoal'
+import deleteGoal from './goals/deleteGoal'
 
-import getHabits         from './habits/getHabits'
-import createHabit       from './habits/createHabit'
-import toggleHabit       from './habits/toggleHabit'
-import deleteHabit       from './habits/deleteHabit'
+import getHabits from './habits/getHabits'
+import createHabit from './habits/createHabit'
+import toggleHabit from './habits/toggleHabit'
+import deleteHabit from './habits/deleteHabit'
 
-import getJournalEntries   from './journal/getJournalEntries'
-import createJournalEntry  from './journal/createJournalEntry'
-import deleteJournalEntry  from './journal/deleteJournalEntry'
+import getJournalEntries from './journal/getJournalEntries'
+import createJournalEntry from './journal/createJournalEntry'
+import deleteJournalEntry from './journal/deleteJournalEntry'
 
-import getTodayCheckins    from './checkins/getTodayCheckins'
-import saveMorningCheckin  from './checkins/saveMorningCheckin'
+import getTodayCheckins from './checkins/getTodayCheckins'
+import saveMorningCheckin from './checkins/saveMorningCheckin'
 import saveEveningReflection from './checkins/saveEveningReflection'
 
-import getBiography        from './biography/getBiography'
+import getBiography from './biography/getBiography'
 
 // ─── Also need pg for auth routes ─────────────────────────────────────────
 import { Pool } from 'pg'
@@ -50,11 +50,11 @@ const db = new Pool({ connectionString })
 
 // ─── App ──────────────────────────────────────────────────────────────────
 
-const app  = express()
+const app = express()
 const PORT = Number(process.env['PORT'] ?? 3000)
 
 app.use(cors({
-  origin: process.env['FRONTEND_URL'] ?? 'http://localhost:5173',
+  origin: ['http://localhost', 'http://localhost:5173', 'http://localhost:3000'],
   credentials: true,
 }))
 app.use(express.json())
@@ -157,29 +157,29 @@ const api = express.Router()
 api.use(requireAuth)
 
 // Goals
-api.get(   '/goals',           handle(getGoals))
-api.post(  '/goals',           handle(createGoal))
-api.patch( '/goals/:id',       handle(updateGoal))
-api.delete('/goals/:id',       handle(deleteGoal))
+api.get('/goals', handle(getGoals))
+api.post('/goals', handle(createGoal))
+api.patch('/goals/:id', handle(updateGoal))
+api.delete('/goals/:id', handle(deleteGoal))
 
 // Habits
-api.get(   '/habits',          handle(getHabits))
-api.post(  '/habits',          handle(createHabit))
-api.post(  '/habits/:habitId/toggle', handle(toggleHabit))
-api.delete('/habits/:id',      handle(deleteHabit))
+api.get('/habits', handle(getHabits))
+api.post('/habits', handle(createHabit))
+api.post('/habits/:habitId/toggle', handle(toggleHabit))
+api.delete('/habits/:id', handle(deleteHabit))
 
 // Journal
-api.get(   '/journal',         handle(getJournalEntries))
-api.post(  '/journal',         handle(createJournalEntry))
-api.delete('/journal/:id',     handle(deleteJournalEntry))
+api.get('/journal', handle(getJournalEntries))
+api.post('/journal', handle(createJournalEntry))
+api.delete('/journal/:id', handle(deleteJournalEntry))
 
 // Checkins
-api.get(   '/checkins/today',  handle(getTodayCheckins))
-api.post(  '/checkins/morning', handle(saveMorningCheckin))
-api.post(  '/checkins/evening', handle(saveEveningReflection))
+api.get('/checkins/today', handle(getTodayCheckins))
+api.post('/checkins/morning', handle(saveMorningCheckin))
+api.post('/checkins/evening', handle(saveEveningReflection))
 
 // Biography
-api.get(   '/biography',       handle(getBiography))
+api.get('/biography', handle(getBiography))
 
 app.use('/api', api)
 

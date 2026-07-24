@@ -161,8 +161,6 @@ export default function Profile() {
             </button>
           ))}
         </div>
-
-        <p className="text-center text-xs text-muted-foreground pb-2">Life OS · Powered by Retool DB · Built with ❤️</p>
       </div>
     </Layout>
   )

@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  # 1. База данных PostgreSQL
+  db:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER:-myuser}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-mypassword}
+      POSTGRES_DB: ${DB_NAME:-mydatabase}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # Автоматическое применение твоей схемы при первом запуске пустой базы
+      - ./backend/migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-myuser} -d ${DB_NAME:-mydatabase}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 2. Бэкенд на Node.js / Express
+  server:
+    build: ./backend
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - DATABASE_URL=postgres://${DB_USER:-myuser}:${DB_PASSWORD:-mypassword}@db:5432/${DB_NAME:-mydatabase}
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # 3. Фронтенд на React + Vite + Nginx
+  # client:
+  #   build: ./frontend
+  #   restart: always
+  #   ports:
+  #     - "80:80"
+  #   depends_on:
+  #     - server
+
+volumes:
+  pgdata:

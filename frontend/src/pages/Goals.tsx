@@ -143,7 +143,7 @@ export default function Goals() {
 
   return (
     <Layout>
-      <div className="px-4 pt-10 pb-4 space-y-5">
+      <div className="px-2 pt-4 pb-4 space-y-5">
 
         {/* ── Header ── */}
         <div className="flex items-center justify-between">
@@ -151,7 +151,7 @@ export default function Goals() {
             <h1 className="text-2xl font-bold text-foreground">Goals</h1>
             <p className="text-sm text-muted-foreground">{rootCount} big goals · {goals.length} total</p>
           </div>
-          <Button size="sm" className="rounded-xl gap-1.5" onClick={() => openCreateDialog(null)}>
+          <Button size="sm" className="rounded-xl gap-0.5" onClick={() => openCreateDialog(null)}>
             <Plus className="w-4 h-4" />
             New Goal
           </Button>
