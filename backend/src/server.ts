@@ -19,6 +19,7 @@ import cookieParser from 'cookie-parser'
 
 import { requireAuth, signToken, hashPassword, verifyPassword } from './lib/auth'
 import type { AppUser } from './lib/auth'
+import { CORS_ORIGINS, PORT } from './lib/config'
 
 // ── Backend functions (same files you copied from Retool) ──────────────────
 import getGoals from './goals/getGoals'
@@ -51,10 +52,9 @@ const db = new Pool({ connectionString })
 // ─── App ──────────────────────────────────────────────────────────────────
 
 const app = express()
-const PORT = Number(process.env['PORT'] ?? 3000)
 
 app.use(cors({
-  origin: process.env['VITE_FRONTEND_URL'] ? [process.env['VITE_FRONTEND_URL']] : ['http://localhost', 'http://localhost:5173', 'http://localhost:3000'],
+  origin: CORS_ORIGINS,
   credentials: true,
 }))
 app.use(express.json())
@@ -187,4 +187,5 @@ app.use('/api', api)
 
 app.listen(PORT, () => {
   console.log(`✅ Life OS backend running on http://localhost:${PORT}`)
+  console.log(`   CORS origins: ${CORS_ORIGINS.join(', ')}`)
 })
