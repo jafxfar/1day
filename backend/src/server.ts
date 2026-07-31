@@ -2,8 +2,11 @@ import 'dotenv/config'
 import { createApp } from './app.js'
 import { createDatabase } from './db.js'
 import { parseConfig } from './config/env.js'
+import { runMigrations } from './lib/migrate.js'
 
 const config = parseConfig(process.env)
+await runMigrations(config)
+
 const database = createDatabase(config)
 const app = createApp(config, {
   database: database.pool,
