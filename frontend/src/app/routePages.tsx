@@ -1,0 +1,14 @@
+import { lazy } from 'react'
+
+export const AICoach = lazy(() => import('../pages/AICoach'))
+export const Auth = lazy(() => import('../pages/Auth'))
+export const Biography = lazy(() => import('../pages/Biography'))
+export const CalendarPage = lazy(() => import('../pages/CalendarPage'))
+export const Dashboard = lazy(() => import('../pages/Dashboard'))
+export const EveningReflection = lazy(() => import('../pages/EveningReflection'))
+export const Goals = lazy(() => import('../pages/Goals'))
+export const Habits = lazy(() => import('../pages/Habits'))
+export const Journal = lazy(() => import('../pages/Journal'))
+export const MorningExperience = lazy(() => import('../pages/MorningExperience'))
+export const Profile = lazy(() => import('../pages/Profile'))
+export const Welcome = lazy(() => import('../pages/Welcome'))

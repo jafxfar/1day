@@ -1,9 +1,8 @@
 
 import { useState, useRef, useEffect } from 'react'
-import { useGetHabits } from '../hooks/backend/habits'
-import { Layout } from '../components/Layout'
-import { Button } from '../components/ui/button'
-import { Input } from '../components/ui/input'
+import { Layout } from '../shared/ui/Layout'
+import { Button } from '../shared/ui/button'
+import { Input } from '../shared/ui/input'
 import { Send, Bot } from 'lucide-react'
 
 interface AIMessage {
@@ -43,14 +42,13 @@ const INITIAL_MESSAGES: AIMessage[] = [
 ]
 
 export default function AICoach() {
-  const { trigger: fetchHabits } = useGetHabits()
-
   const [messages, setMessages] = useState<AIMessage[]>(INITIAL_MESSAGES)
   const [input,    setInput]    = useState('')
   const [isTyping, setIsTyping] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
+  const nextMessageId = useRef(2)
+  const nextResponseIndex = useRef(0)
 
-  useEffect(() => { void fetchHabits() }, [])
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, isTyping])
@@ -59,7 +57,7 @@ export default function AICoach() {
     if (!text.trim() || isTyping) return
 
     const userMsg: AIMessage = {
-      id:        Date.now().toString(),
+      id:        String(nextMessageId.current++),
       role:      'user',
       content:   text.trim(),
       timestamp: new Date().toISOString(),
@@ -68,11 +66,11 @@ export default function AICoach() {
     setInput('')
     setIsTyping(true)
 
-    await new Promise(r => setTimeout(r, 900 + Math.random() * 600))
+    await new Promise(r => setTimeout(r, 1000))
 
-    const response = AI_RESPONSES[Math.floor(Math.random() * AI_RESPONSES.length)] ?? AI_RESPONSES[0]!
+    const response = AI_RESPONSES[nextResponseIndex.current++ % AI_RESPONSES.length] ?? AI_RESPONSES[0]!
     const aiMsg: AIMessage = {
-      id:        (Date.now() + 1).toString(),
+      id:        String(nextMessageId.current++),
       role:      'assistant',
       content:   response,
       timestamp: new Date().toISOString(),
@@ -160,7 +158,7 @@ export default function AICoach() {
               ))}
             </div>
           )}
-          <div className="flex gap-2 bg-card border border-border rounded-2xl p-2 shadow-retool-md">
+          <div className="flex gap-2 bg-card border border-border rounded-2xl p-2 shadow-app-md">
             <Input
               value={input}
               onChange={e => setInput(e.target.value)}

@@ -1,14 +1,12 @@
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useSaveEveningReflection } from '../hooks/backend/checkins'
-import { useGetHabits } from '../hooks/backend/habits'
-import { useApp } from '../context/AppContext'
-import { Button } from '../components/ui/button'
-import { Textarea } from '../components/ui/textarea'
+import { useSaveEveningReflection } from '../entities/checkins/model/useCheckins'
+import { useGetHabits } from '../entities/habits/model/useHabits'
+import { useCheckins } from '../entities/checkins/model/useCheckinsContext'
+import { Button } from '../shared/ui/button'
+import { Textarea } from '../shared/ui/textarea'
 import { ChevronLeft, Moon, Sparkles, Trophy, Sprout, Search, Star, Tag, Smile, Meh, Frown } from 'lucide-react'
-import { cast } from '../lib/types'
-import { useEffect } from 'react'
 
 const EVENING_TAGS = [
   'productive', 'tired', 'grateful', 'challenged', 'inspired',
@@ -34,9 +32,9 @@ const STEPS = [
 
 export default function EveningReflection() {
   const navigate = useNavigate()
-  const { refetchCheckins } = useApp()
+  const { refetch: refetchCheckins } = useCheckins()
   const { trigger: saveReflection, loading: saving } = useSaveEveningReflection()
-  const { data: rawHabits, trigger: fetchHabits } = useGetHabits()
+  const { data: habits = [], trigger: fetchHabits } = useGetHabits()
 
   const [step, setStep] = useState(0)
   const [success, setSuccess] = useState('')
@@ -46,11 +44,9 @@ export default function EveningReflection() {
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [completed, setCompleted] = useState(false)
 
-  useEffect(() => { void fetchHabits() }, [])
-
-  const habits = cast.habits(rawHabits)
+  useEffect(() => { void fetchHabits() }, [fetchHabits])
   const completedHabits = habits.filter(h => h.completedToday).length
-  const aiSummary = AI_SUMMARIES[Math.floor(Math.random() * AI_SUMMARIES.length)] ?? AI_SUMMARIES[0]!
+  const aiSummary = AI_SUMMARIES[(rating + selectedTags.length) % AI_SUMMARIES.length] ?? AI_SUMMARIES[0]!
 
   const toggleTag = (tag: string) =>
     setSelectedTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag])

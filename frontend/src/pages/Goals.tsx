@@ -1,21 +1,21 @@
 
-import { useState, useEffect, useMemo } from 'react'
-import { useGetGoals, useCreateGoal, useUpdateGoal, useDeleteGoal } from '../hooks/backend/goals'
-import { Layout } from '../components/Layout'
-import { PageSkeleton, PageError } from '../components/PageSkeleton'
-import { Button } from '../components/ui/button'
-import { Input } from '../components/ui/input'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
+import type { Goal, GoalCategory, PeriodType } from '@life-os/contracts'
+import { useEffect, useMemo, useState } from 'react'
+import { useCreateGoal, useDeleteGoal, useGetGoals, useUpdateGoal } from '../entities/goals/model/useGoals'
+import { cn } from '../shared/lib/utils'
+import { Button } from '../shared/ui/button'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../shared/ui/dialog'
+import { Input } from '../shared/ui/input'
+import { Layout } from '../shared/ui/Layout'
+import { PageError, PageSkeleton } from '../shared/ui/PageSkeleton'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../shared/ui/select'
 import { Plus, Trash2, ChevronDown, ChevronRight, CheckCircle2, TrendingUp, Target, Calendar, ClipboardList, Zap } from 'lucide-react'
-import type { Goal, GoalCategory, PeriodType } from '../lib/types'
-import { cast } from '../lib/types'
-import { cn } from '../lib/utils'
+import type { LucideIcon } from 'lucide-react'
 
 // ─── Config ──────────────────────────────────────────────────────────────────
 
 type CatConfig = { label: string; color: string; bg: string }
-type PeriodConf = { label: string; icon: React.ComponentType<any>; color: string; bg: string; childLabel: string | null; childType: PeriodType | null }
+type PeriodConf = { label: string; icon: LucideIcon; color: string; bg: string; childLabel: string | null; childType: PeriodType | null }
 
 const CAT_CONFIG: Record<GoalCategory, CatConfig> = {
   health: { label: 'Health', color: 'text-green-700 dark:text-green-300', bg: 'bg-green-50 dark:bg-green-950/40' },
@@ -60,12 +60,10 @@ function buildTree(goals: Goal[]): GoalTreeNode[] {
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function Goals() {
-  const { data: rawGoals, loading, error, trigger: fetchGoals } = useGetGoals()
+  const { data: goals = [], setData: setGoals, loading, error, trigger: fetchGoals } = useGetGoals()
   const { trigger: createGoal, loading: creating } = useCreateGoal()
   const { trigger: updateGoal } = useUpdateGoal()
   const { trigger: deleteGoal } = useDeleteGoal()
-
-  const [goals, setGoals] = useState<Goal[]>([])
 
   // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -75,8 +73,7 @@ export default function Goals() {
   const [category, setCategory] = useState<GoalCategory>('personal')
   const [deadline, setDeadline] = useState('')
 
-  useEffect(() => { void fetchGoals() }, [])
-  useEffect(() => { setGoals(cast.goals(rawGoals)) }, [rawGoals])
+  useEffect(() => { void fetchGoals() }, [fetchGoals])
 
   const tree = useMemo(() => buildTree(goals), [goals])
 
@@ -107,20 +104,28 @@ export default function Goals() {
     })
 
     if (newGoal) {
-      setGoals(prev => [...prev, cast.goal(newGoal)!])
+      setGoals(prev => [...(prev ?? []), newGoal])
     }
     setDialogOpen(false)
   }
 
   const handleProgressUpdate = async (id: string, progress: number) => {
-    setGoals(prev => prev.map(g => g.id === id ? { ...g, progress } : g))
-    await updateGoal({ id, progress })
+    const previousGoals = goals
+    setGoals(previousGoals.map(g => g.id === id ? { ...g, progress } : g))
+
+    if (!await updateGoal({ id, progress })) {
+      setGoals(previousGoals)
+    }
   }
 
   const handleToggleComplete = async (goal: Goal) => {
     const next = !goal.isCompleted
-    setGoals(prev => prev.map(g => g.id === goal.id ? { ...g, isCompleted: next, progress: next ? 100 : g.progress } : g))
-    await updateGoal({ id: goal.id, isCompleted: next, ...(next ? { progress: 100 } : {}) })
+    const previousGoals = goals
+    setGoals(previousGoals.map(g => g.id === goal.id ? { ...g, isCompleted: next, progress: next ? 100 : g.progress } : g))
+
+    if (!await updateGoal({ id: goal.id, isCompleted: next, ...(next ? { progress: 100 } : {}) })) {
+      setGoals(previousGoals)
+    }
   }
 
   const handleDelete = async (id: string) => {
@@ -130,8 +135,12 @@ export default function Goals() {
       return [goalId, ...children.flatMap(c => allDescendants(c.id))]
     }
     const toRemove = new Set(allDescendants(id))
-    setGoals(prev => prev.filter(g => !toRemove.has(g.id)))
-    await deleteGoal({ id })
+    const previousGoals = goals
+    setGoals(previousGoals.filter(g => !toRemove.has(g.id)))
+
+    if (!await deleteGoal({ id })) {
+      setGoals(previousGoals)
+    }
   }
 
   if (loading && goals.length === 0) return <Layout><PageSkeleton /></Layout>
@@ -291,7 +300,7 @@ function GoalCard({ node, depth, onAddChild, onProgressChange, onToggleComplete,
       <div className={cn(
         'bg-card border border-border rounded-2xl overflow-hidden transition-all',
         node.isCompleted && 'opacity-70',
-        depth === 0 && 'shadow-retool-sm',
+        depth === 0 && 'shadow-app-sm',
       )}>
         {/* Top accent line by period */}
         <div className={cn('h-0.5 w-full', {

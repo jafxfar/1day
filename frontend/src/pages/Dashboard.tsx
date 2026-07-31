@@ -1,17 +1,16 @@
 
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useApp } from '../context/AppContext'
-import { useGetGoals } from '../hooks/backend/goals'
-import { useGetHabits, useToggleHabit } from '../hooks/backend/habits'
-import { useGetJournalEntries } from '../hooks/backend/journal'
-import { Layout } from '../components/Layout'
-import { Progress } from '../components/ui/progress'
-import { Badge } from '../components/ui/badge'
+import { useSession } from '../entities/auth/model/useSession'
+import { useCheckins } from '../entities/checkins/model/useCheckinsContext'
+import { useGetGoals } from '../entities/goals/model/useGoals'
+import { useGetHabits, useToggleHabit } from '../entities/habits/model/useHabits'
+import { useGetJournalEntries } from '../entities/journal/model/useJournal'
+import { Layout } from '../shared/ui/Layout'
+import { Progress } from '../shared/ui/progress'
+import { Badge } from '../shared/ui/badge'
 import { Bell, Bot, ChevronRight, Moon, Sun, Zap, Flame, Smile, Meh, Frown, Laugh, Target, Calendar } from 'lucide-react'
-import type { Goal, Habit, JournalEntry } from '../lib/types'
-import { cast } from '../lib/types'
-import { getHabitIcon } from '../lib/icons'
+import { getHabitIcon } from '../shared/lib/icons'
 
 const getMoodIcon = (moodVal: number) => {
   switch (moodVal) {
@@ -31,29 +30,22 @@ function getGreeting() {
   return 'Good evening'
 }
 
-interface ToggleResult { habitId: string; completedToday: boolean; currentStreak: number; longestStreak: number }
-
 export default function Dashboard() {
   const navigate = useNavigate()
-  const { userName, morningCheckin, hasCompletedMorning, isLoadingCheckins } = useApp()
+  const { user } = useSession()
+  const { morningCheckin, hasCompletedMorning, isLoading: isLoadingCheckins } = useCheckins()
+  const userName = user?.firstName ?? 'Friend'
 
-  const { data: rawGoals, trigger: fetchGoals } = useGetGoals()
-  const { data: rawHabits, trigger: fetchHabits } = useGetHabits()
-  const { data: rawJournal, trigger: fetchJournal } = useGetJournalEntries()
+  const { data: goals = [], trigger: fetchGoals } = useGetGoals()
+  const { data: habits = [], setData: setHabits, trigger: fetchHabits } = useGetHabits()
+  const { data: entries = [], trigger: fetchJournal } = useGetJournalEntries()
   const { trigger: toggleHabitFn } = useToggleHabit()
-
-  const [goals, setGoals] = useState<Goal[]>([])
-  const [habits, setHabits] = useState<Habit[]>([])
-  const [entries, setEntries] = useState<JournalEntry[]>([])
 
   useEffect(() => {
     void fetchGoals()
     void fetchHabits()
     void fetchJournal()
-  }, [])
-  useEffect(() => { setGoals(cast.goals(rawGoals)) }, [rawGoals])
-  useEffect(() => { setHabits(cast.habits(rawHabits)) }, [rawHabits])
-  useEffect(() => { setEntries(cast.journalEntries(rawJournal)) }, [rawJournal])
+  }, [fetchGoals, fetchHabits, fetchJournal])
 
   const completedHabits = habits.filter(h => h.completedToday).length
   const avgGoalProgress = goals.length
@@ -63,15 +55,25 @@ export default function Dashboard() {
   const topStreak = habits.reduce((max, h) => Math.max(max, h.currentStreak), 0)
 
   const handleToggle = async (id: string) => {
-    setHabits(prev => prev.map(h =>
+    const previousHabits = habits
+    setHabits(previousHabits.map(h =>
       h.id !== id ? h : { ...h, completedToday: !h.completedToday, currentStreak: !h.completedToday ? h.currentStreak + 1 : Math.max(0, h.currentStreak - 1) }
     ))
-    const result = await toggleHabitFn({ habitId: id }) as ToggleResult | null
+    const result = await toggleHabitFn({ habitId: id })
+
     if (result) {
-      setHabits(prev => prev.map(h =>
-        h.id !== id ? h : { ...h, completedToday: result.completedToday, currentStreak: result.currentStreak }
+      setHabits(currentHabits => (currentHabits ?? []).map(h =>
+        h.id !== id ? h : {
+          ...h,
+          completedToday: result.completedToday,
+          currentStreak: result.currentStreak,
+          longestStreak: result.longestStreak,
+        }
       ))
+      return
     }
+
+    setHabits(previousHabits)
   }
 
   return (
@@ -206,11 +208,10 @@ export default function Dashboard() {
             </div>
             <div className="space-y-2">
               {habits.slice(0, 4).map(habit => {
-                const HabitIcon = getHabitIcon(habit.icon)
                 return (
                   <div key={habit.id} className="flex items-center gap-3 bg-card border border-border rounded-2xl px-4 py-3">
                     <span className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                      <HabitIcon className="w-4 h-4 text-primary" />
+                      {getHabitIcon(habit.icon, 'w-4 h-4 text-primary')}
                     </span>
                     <p className={`flex-1 text-sm font-medium ${habit.completedToday ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
                       {habit.title}

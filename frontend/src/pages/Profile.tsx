@@ -1,15 +1,14 @@
 
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useApp } from '../context/AppContext'
-import { useGetGoals } from '../hooks/backend/goals'
-import { useGetHabits } from '../hooks/backend/habits'
-import { useGetJournalEntries } from '../hooks/backend/journal'
-import { Layout } from '../components/Layout'
-import { Badge } from '../components/ui/badge'
+import { useSession } from '../entities/auth/model/useSession'
+import { useCheckins } from '../entities/checkins/model/useCheckinsContext'
+import { useGetGoals } from '../entities/goals/model/useGoals'
+import { useGetHabits } from '../entities/habits/model/useHabits'
+import { useGetJournalEntries } from '../entities/journal/model/useJournal'
+import { Layout } from '../shared/ui/Layout'
+import { Badge } from '../shared/ui/badge'
 import { ChevronRight, Target, CheckSquare2, BookOpen, Flame, Bot, Bell, Moon, Lock, Settings, TrendingUp, Calendar, LogOut, CheckCircle2, Clock } from 'lucide-react'
-import type { Goal, Habit, JournalEntry } from '../lib/types'
-import { cast } from '../lib/types'
 
 const MVP_CHECKLIST = [
   { label: 'Morning Experience', done: true },
@@ -28,20 +27,21 @@ const MVP_CHECKLIST = [
 
 export default function Profile() {
   const navigate = useNavigate()
-  const { userName, userInitial, userEmail, morningCheckin, hasCompletedMorning, logout } = useApp()
+  const { user, logout } = useSession()
+  const { morningCheckin, hasCompletedMorning } = useCheckins()
+  const userName = user?.firstName ?? 'Friend'
+  const userInitial = (user?.firstName?.[0] ?? '?').toUpperCase()
+  const userEmail = user?.email ?? ''
 
-  const { data: rawGoals, trigger: fetchGoals } = useGetGoals()
-  const { data: rawHabits, trigger: fetchHabits } = useGetHabits()
-  const { data: rawJournal, trigger: fetchJournal } = useGetJournalEntries()
+  const { data: goals = [], trigger: fetchGoals } = useGetGoals()
+  const { data: habits = [], trigger: fetchHabits } = useGetHabits()
+  const { data: entries = [], trigger: fetchJournal } = useGetJournalEntries()
 
-  const [goals, setGoals] = useState<Goal[]>([])
-  const [habits, setHabits] = useState<Habit[]>([])
-  const [entries, setEntries] = useState<JournalEntry[]>([])
-
-  useEffect(() => { void fetchGoals(); void fetchHabits(); void fetchJournal() }, [])
-  useEffect(() => { setGoals(cast.goals(rawGoals)) }, [rawGoals])
-  useEffect(() => { setHabits(cast.habits(rawHabits)) }, [rawHabits])
-  useEffect(() => { setEntries(cast.journalEntries(rawJournal)) }, [rawJournal])
+  useEffect(() => {
+    void fetchGoals()
+    void fetchHabits()
+    void fetchJournal()
+  }, [fetchGoals, fetchHabits, fetchJournal])
 
   const completedToday = habits.filter(h => h.completedToday).length
   const avgGoalProg = goals.length ? Math.round(goals.reduce((a, g) => a + g.progress, 0) / goals.length) : 0

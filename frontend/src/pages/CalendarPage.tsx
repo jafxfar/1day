@@ -1,12 +1,11 @@
 
 import { useState, useEffect } from 'react'
-import { useGetJournalEntries } from '../hooks/backend/journal'
-import { useGetHabits } from '../hooks/backend/habits'
-import { Layout } from '../components/Layout'
-import { Badge } from '../components/ui/badge'
+import type { JournalEntry } from '@life-os/contracts'
+import { useGetJournalEntries } from '../entities/journal/model/useJournal'
+import { useGetHabits } from '../entities/habits/model/useHabits'
+import { Layout } from '../shared/ui/Layout'
+import { Badge } from '../shared/ui/badge'
 import { ChevronLeft, ChevronRight, Smile, Meh, Frown, Laugh, CheckCircle2 } from 'lucide-react'
-import type { JournalEntry, Habit } from '../lib/types'
-import { cast } from '../lib/types'
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
@@ -20,15 +19,13 @@ const getMoodIcon = (mood: number) => {
 }
 
 export default function CalendarPage() {
-  const { data: rawEntries, trigger: fetchEntries } = useGetJournalEntries()
-  const { data: rawHabits, trigger: fetchHabits } = useGetHabits()
+  const { data: entries = [], trigger: fetchEntries } = useGetJournalEntries()
+  const { data: habits = [], trigger: fetchHabits } = useGetHabits()
 
-  const [entries, setEntries] = useState<JournalEntry[]>([])
-  const [habits, setHabits] = useState<Habit[]>([])
-
-  useEffect(() => { void fetchEntries(); void fetchHabits() }, [])
-  useEffect(() => { setEntries(cast.journalEntries(rawEntries)) }, [rawEntries])
-  useEffect(() => { setHabits(cast.habits(rawHabits)) }, [rawHabits])
+  useEffect(() => {
+    void fetchEntries()
+    void fetchHabits()
+  }, [fetchEntries, fetchHabits])
 
   const now = new Date()
   const [viewDate, setViewDate] = useState(new Date(now.getFullYear(), now.getMonth(), 1))

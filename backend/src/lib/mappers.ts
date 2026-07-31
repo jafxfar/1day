@@ -1,12 +1,10 @@
 
-/**
- * Pure mapping functions from DB row shapes (snake_case) to API shapes (camelCase).
- * Keeping transforms in one place makes schema changes easy to propagate.
- */
+import type {
+  Goal, Habit, JournalEntry, MorningCheckin, EveningReflection,
+} from '@life-os/contracts'
 import type {
   GoalRow, HabitRow, JournalEntryRow, DayCheckinRow,
-  Goal, Habit, JournalEntry, MorningCheckin, EveningReflection,
-} from './types'
+} from './types.js'
 
 export function mapGoal(row: GoalRow & { depth?: number }): Goal {
   return {

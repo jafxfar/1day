@@ -1,42 +1,32 @@
 
-import { useState, useEffect } from 'react'
-import { useGetHabits, useCreateHabit, useToggleHabit, useDeleteHabit } from '../hooks/backend/habits'
-import { Layout } from '../components/Layout'
-import { PageSkeleton, PageError } from '../components/PageSkeleton'
-import { Button } from '../components/ui/button'
-import { Input } from '../components/ui/input'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog'
+import type { Habit, HabitType } from '@life-os/contracts'
+import { useEffect, useState } from 'react'
+import { useCreateHabit, useDeleteHabit, useGetHabits, useToggleHabit } from '../entities/habits/model/useHabits'
+import { Layout } from '../shared/ui/Layout'
+import { PageSkeleton, PageError } from '../shared/ui/PageSkeleton'
+import { Button } from '../shared/ui/button'
+import { Input } from '../shared/ui/input'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../shared/ui/dialog'
 import { Plus, Flame, CheckCircle2, X } from 'lucide-react'
-import type { Habit, HabitType } from '../lib/types'
-import { cast } from '../lib/types'
-import { getHabitIcon } from '../lib/icons'
+import { getHabitIcon } from '../shared/lib/icons'
 
 const HABIT_ICONS = [
   'Brain', 'Dumbbell', 'BookOpen', 'ShowerHead', 'Droplets', 'Activity', 'Apple', 'Moon',
   'PenTool', 'Target', 'Heart', 'Smile', 'Music', 'Leaf', 'Sun', 'ClipboardList'
 ]
 
-interface ToggleResult {
-  habitId: string
-  completedToday: boolean
-  currentStreak: number
-  longestStreak: number
-}
-
 export default function Habits() {
-  const { data: rawHabits, loading, error, trigger: fetchHabits } = useGetHabits()
+  const { data: habits = [], setData: setHabits, loading, error, trigger: fetchHabits } = useGetHabits()
   const { trigger: createHabit, loading: creating } = useCreateHabit()
   const { trigger: toggleHabitFn } = useToggleHabit()
   const { trigger: deleteHabit } = useDeleteHabit()
 
-  const [habits, setHabits] = useState<Habit[]>([])
   const [showCreate, setShowCreate] = useState(false)
   const [title, setTitle] = useState('')
   const [selectedIcon, setSelectedIcon] = useState('Target')
   const [type, setType] = useState<HabitType>('positive')
 
-  useEffect(() => { void fetchHabits() }, [])
-  useEffect(() => { setHabits(cast.habits(rawHabits)) }, [rawHabits])
+  useEffect(() => { void fetchHabits() }, [fetchHabits])
 
   const completedCount = habits.filter(h => h.completedToday).length
   const bestStreak = habits.reduce((max, h) => Math.max(max, h.currentStreak), 0)
@@ -44,20 +34,19 @@ export default function Habits() {
 
   /** Optimistic toggle: update UI immediately, reconcile with server result */
   const handleToggle = async (id: string) => {
-    setHabits(prev =>
-      prev.map(h =>
+    const previousHabits = habits
+    setHabits(previousHabits.map(h =>
         h.id !== id ? h : {
           ...h,
           completedToday: !h.completedToday,
           currentStreak: !h.completedToday ? h.currentStreak + 1 : Math.max(0, h.currentStreak - 1),
         }
-      )
-    )
+      ))
 
-    const result = await toggleHabitFn({ habitId: id }) as ToggleResult | null
+    const result = await toggleHabitFn({ habitId: id })
     if (result) {
-      setHabits(prev =>
-        prev.map(h =>
+      setHabits(currentHabits =>
+        (currentHabits ?? []).map(h =>
           h.id !== id ? h : {
             ...h,
             completedToday: result.completedToday,
@@ -66,20 +55,27 @@ export default function Habits() {
           }
         )
       )
+      return
     }
+
+    setHabits(previousHabits)
   }
 
   const handleCreate = async () => {
     if (!title.trim()) return
     const newHabit = await createHabit({ title: title.trim(), type, icon: selectedIcon, category: 'general' })
-    if (newHabit) setHabits(prev => [...prev, cast.habits([newHabit])[0]!])
+    if (newHabit) setHabits(prev => [...(prev ?? []), newHabit])
     setTitle(''); setSelectedIcon('Target'); setType('positive')
     setShowCreate(false)
   }
 
   const handleDelete = async (id: string) => {
-    setHabits(prev => prev.filter(h => h.id !== id))
-    await deleteHabit({ id })
+    const previousHabits = habits
+    setHabits(previousHabits.filter(h => h.id !== id))
+
+    if (!await deleteHabit({ id })) {
+      setHabits(previousHabits)
+    }
   }
 
   const positiveHabits = habits.filter(h => h.type === 'positive')
@@ -165,13 +161,12 @@ export default function Habits() {
               <p className="text-xs text-muted-foreground mb-2">Choose icon</p>
               <div className="grid grid-cols-8 gap-1.5">
                 {HABIT_ICONS.map(icon => {
-                  const IconComp = getHabitIcon(icon)
                   return (
                     <button key={icon} onClick={() => setSelectedIcon(icon)}
                       className={`aspect-square flex items-center justify-center rounded-xl transition-all ${selectedIcon === icon ? 'bg-primary/10 ring-2 ring-primary/40 scale-110' : 'bg-muted hover:bg-accent'
                         }`}
                     >
-                      <IconComp className={`w-5 h-5 ${selectedIcon === icon ? 'text-primary' : 'text-muted-foreground'}`} />
+                      {getHabitIcon(icon, `w-5 h-5 ${selectedIcon === icon ? 'text-primary' : 'text-muted-foreground'}`)}
                     </button>
                   )
                 })}
@@ -209,14 +204,13 @@ function HabitCard({
   onToggle: (id: string) => void
   onDelete: (id: string) => void
 }) {
-  const IconComp = getHabitIcon(habit.icon)
   return (
     <div className={`flex items-center gap-3 rounded-2xl px-4 py-3.5 border transition-all ${habit.completedToday
         ? 'bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800'
         : 'bg-card border-border'
       }`}>
       <span className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-        <IconComp className="w-4 h-4 text-primary" />
+        {getHabitIcon(habit.icon, 'w-4 h-4 text-primary')}
       </span>
       <div className="flex-1 min-w-0">
         <p className={`text-sm font-medium ${habit.completedToday ? 'line-through text-muted-foreground' : 'text-foreground'}`}>

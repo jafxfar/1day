@@ -1,6 +1,6 @@
 
 import { useNavigate } from 'react-router-dom'
-import { Button } from '../components/ui/button'
+import { Button } from '../shared/ui/button'
 import { Sparkles, Target, CheckSquare2, BookOpen, Bot } from 'lucide-react'
 
 const FEATURES = [
@@ -18,7 +18,7 @@ export default function Welcome() {
       {/* Hero */}
       <div className="flex-1 flex flex-col items-center justify-center text-center gap-8 pt-16">
         <div className="relative">
-          <div className="w-24 h-24 rounded-3xl bg-primary flex items-center justify-center shadow-retool-lg">
+          <div className="w-24 h-24 rounded-3xl bg-primary flex items-center justify-center shadow-app-lg">
             <Sparkles className="w-12 h-12 text-primary-foreground" />
           </div>
           <div className="absolute -top-1 -right-1 w-6 h-6 bg-green-500 dark:bg-green-400 rounded-full flex items-center justify-center">

@@ -1,11 +1,11 @@
 
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Button } from '../components/ui/button'
-import { Input } from '../components/ui/input'
-import { Slider } from '../components/ui/slider'
-import { useApp } from '../context/AppContext'
-import { useSaveMorningCheckin } from '../hooks/backend/checkins'
+import { Button } from '../shared/ui/button'
+import { Input } from '../shared/ui/input'
+import { Slider } from '../shared/ui/slider'
+import { useCheckins } from '../entities/checkins/model/useCheckinsContext'
+import { useSaveMorningCheckin } from '../entities/checkins/model/useCheckins'
 import { ChevronLeft, Moon, Sun, BatteryCharging, MessageSquare, Target, CheckCircle2, Smile, AlertTriangle, Frown, Meh, Zap, Laugh } from 'lucide-react'
 
 const SLEEP_OPTIONS = [4, 5, 6, 7, 8, 9, 10] as const
@@ -32,7 +32,7 @@ const STEPS = [
 
 export default function MorningExperience() {
   const navigate = useNavigate()
-  const { refetchCheckins } = useApp()
+  const { refetch: refetchCheckins } = useCheckins()
   const { trigger: saveCheckin, loading: saving } = useSaveMorningCheckin()
 
   const [step, setStep] = useState(0)
@@ -105,7 +105,7 @@ export default function MorningExperience() {
                 {SLEEP_OPTIONS.map(h => (
                   <button key={h} onClick={() => setSleep(h)}
                     className={`py-1.5 rounded-2xl text-base font-bold transition-all ${sleepHours === h
-                        ? 'bg-primary text-primary-foreground shadow-retool-sm scale-105'
+                        ? 'bg-primary text-primary-foreground shadow-app-sm scale-105'
                         : 'bg-card border border-border text-foreground hover:border-primary/40'
                       }`}
                   >
@@ -149,7 +149,7 @@ export default function MorningExperience() {
                 {MOODS.map(({ value, icon: Icon, label, color }) => (
                   <button key={value} onClick={() => setMood(value)}
                     className={`flex flex-col items-center gap-2.5 py-3 rounded-2xl border transition-all ${mood === value
-                        ? 'border-primary bg-primary/5 scale-105 shadow-retool-sm'
+                        ? 'border-primary bg-primary/5 scale-105 shadow-app-sm'
                         : 'border-border bg-card hover:border-primary/40'
                       }`}
                   >

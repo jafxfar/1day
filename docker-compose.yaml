@@ -1,7 +1,4 @@
-version: '3.8'
-
 services:
-  # 1. База данных PostgreSQL
   db:
     image: postgres:15-alpine
     restart: always
@@ -13,7 +10,6 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
-      # Автоматическое применение твоей схемы при первом запуске пустой базы
       - ./backend/migrations:/docker-entrypoint-initdb.d
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-myuser} -d ${DB_NAME:-mydatabase}"]
@@ -21,27 +17,41 @@ services:
       timeout: 5s
       retries: 5
 
-  # 2. Бэкенд на Node.js / Express
   server:
-    build: ./backend
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
     restart: always
     ports:
       - "3000:3000"
     environment:
-      - PORT=3000
-      - DATABASE_URL=postgres://${DB_USER:-myuser}:${DB_PASSWORD:-mypassword}@db:5432/${DB_NAME:-mydatabase}
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgres://${DB_USER:-myuser}:${DB_PASSWORD:-mypassword}@db:5432/${DB_NAME:-mydatabase}
+      DATABASE_SSL: "false"
+      JWT_SECRET: ${JWT_SECRET:-development-only-secret-change-me-123456}
+      JWT_EXPIRES: 30d
+      CORS_ORIGINS: http://localhost
+      COOKIE_NAME: token
+      COOKIE_SECURE: "false"
+      COOKIE_SAME_SITE: lax
+      COOKIE_MAX_AGE_MS: 2592000000
     depends_on:
       db:
         condition: service_healthy
 
-  # 3. Фронтенд на React + Vite + Nginx
-  # client:
-  #   build: ./frontend
-  #   restart: always
-  #   ports:
-  #     - "80:80"
-  #   depends_on:
-  #     - server
+  client:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        VITE_API_URL: ""
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      server:
+        condition: service_healthy
 
 volumes:
   pgdata:

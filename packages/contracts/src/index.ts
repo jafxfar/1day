@@ -1,0 +1,232 @@
+import { z } from 'zod'
+
+export const apiRoutes = {
+  health: '/api/health',
+  readiness: '/api/readiness',
+  auth: {
+    register: '/api/auth/register',
+    login: '/api/auth/login',
+    logout: '/api/auth/logout',
+    me: '/api/auth/me',
+  },
+  goals: '/api/goals',
+  habits: '/api/habits',
+  journal: '/api/journal',
+  checkins: {
+    today: '/api/checkins/today',
+    morning: '/api/checkins/morning',
+    evening: '/api/checkins/evening',
+  },
+  biography: '/api/biography',
+} as const
+
+export const goalCategories = [
+  'health',
+  'career',
+  'learning',
+  'relationships',
+  'finance',
+  'personal',
+] as const
+
+export const periodTypes = ['long_term', 'monthly', 'weekly', 'daily'] as const
+export const habitTypes = ['positive', 'negative'] as const
+
+export type GoalCategory = typeof goalCategories[number]
+export type PeriodType = typeof periodTypes[number]
+export type HabitType = typeof habitTypes[number]
+export type CheckinType = 'morning' | 'evening'
+
+export interface AuthUser {
+  id: number
+  email: string
+  firstName: string
+  lastName: string
+  fullName: string
+  profilePhotoUrl: string | null
+  groups: Array<{ id: number; name: string }>
+  metadata: Record<string, unknown>
+  sid: string
+  externalIdentifier: string | null
+  locale: string
+}
+
+export interface Goal {
+  id: string
+  title: string
+  description: string
+  category: GoalCategory
+  progress: number
+  deadline: string | null
+  isCompleted: boolean
+  completedAt: string | null
+  parentId: string | null
+  periodType: PeriodType
+  depth: number
+  createdAt: string
+  updatedAt: string
+}
+
+export interface Habit {
+  id: string
+  title: string
+  type: HabitType
+  icon: string
+  category: string
+  currentStreak: number
+  longestStreak: number
+  completedToday: boolean
+  isArchived: boolean
+  createdAt: string
+}
+
+export interface JournalEntry {
+  id: string
+  entryDate: string
+  title: string
+  content: string
+  mood: number
+  energy: number
+  tags: string[]
+  createdAt: string
+  updatedAt: string
+}
+
+export interface MorningCheckin {
+  id: string
+  checkinDate: string
+  sleepHours: number
+  energy: number
+  mood: number
+  focusText: string
+  createdAt: string
+}
+
+export interface EveningReflection {
+  id: string
+  checkinDate: string
+  rating: number
+  wins: string
+  failures: string
+  reasons: string
+  tags: string[]
+  createdAt: string
+}
+
+export interface TodayCheckins {
+  morning: MorningCheckin | null
+  evening: EveningReflection | null
+}
+
+export type DayQuality = 'great' | 'good' | 'neutral' | 'poor' | 'no_data'
+
+export interface BiographyHabitRecord {
+  title: string
+  icon: string
+  completed: boolean
+}
+
+export interface BiographyDay {
+  date: string
+  mood: number | null
+  energy: number | null
+  sleepHours: number | null
+  focusText: string | null
+  eveningRating: number | null
+  eveningTags: string[]
+  wins: string | null
+  failures: string | null
+  habits: BiographyHabitRecord[]
+  habitsCompleted: number
+  habitsTotal: number
+  journalTitle: string | null
+  journalContent: string | null
+  journalMood: number | null
+  journalTags: string[]
+  score: number
+  quality: DayQuality
+}
+
+const dateSchema = z.iso.date()
+const optionalDateSchema = dateSchema.optional()
+const nullableDateSchema = dateSchema.nullable()
+
+export const loginSchema = z.object({
+  email: z.email(),
+  password: z.string().min(1).max(128),
+})
+
+export const registerSchema = loginSchema.extend({
+  password: z.string().min(8).max(128),
+  firstName: z.string().trim().min(1).max(100).default('User'),
+  lastName: z.string().trim().max(100).default(''),
+})
+
+export const createGoalSchema = z.object({
+  title: z.string().trim().min(1).max(255),
+  description: z.string().trim().max(5000).default(''),
+  category: z.enum(goalCategories),
+  deadline: nullableDateSchema,
+  parentId: z.string().uuid().nullable().optional(),
+  periodType: z.enum(periodTypes).optional(),
+})
+
+export const updateGoalSchema = z.object({
+  title: z.string().trim().min(1).max(255).optional(),
+  description: z.string().trim().max(5000).optional(),
+  category: z.enum(goalCategories).optional(),
+  progress: z.number().min(0).max(100).optional(),
+  deadline: nullableDateSchema.optional(),
+  isCompleted: z.boolean().optional(),
+})
+
+export const createHabitSchema = z.object({
+  title: z.string().trim().min(1).max(255),
+  type: z.enum(habitTypes),
+  icon: z.string().max(100).default('🎯'),
+  category: z.string().trim().max(100).default('general'),
+})
+
+export const journalQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+  offset: z.coerce.number().int().min(0).default(0),
+})
+
+export const createJournalEntrySchema = z.object({
+  title: z.string().trim().min(1).max(255),
+  content: z.string().trim().min(1).max(50000),
+  mood: z.number().min(1).max(10),
+  energy: z.number().min(1).max(10),
+  tags: z.array(z.string().trim().min(1).max(100)).default([]),
+  entryDate: optionalDateSchema,
+})
+
+export const saveMorningCheckinSchema = z.object({
+  sleepHours: z.number().min(1).max(12),
+  energy: z.number().min(1).max(10),
+  mood: z.number().min(1).max(5),
+  focusText: z.string().trim().max(5000),
+  checkinDate: optionalDateSchema,
+})
+
+export const saveEveningReflectionSchema = z.object({
+  rating: z.number().min(1).max(10),
+  wins: z.string().trim().max(10000),
+  failures: z.string().trim().max(10000),
+  reasons: z.string().trim().max(10000),
+  tags: z.array(z.string().trim().min(1).max(100)).default([]),
+  checkinDate: optionalDateSchema,
+})
+
+export const idParamsSchema = z.object({ id: z.string().uuid() })
+export const habitIdParamsSchema = z.object({ habitId: z.string().uuid() })
+
+export type LoginPayload = z.input<typeof loginSchema>
+export type RegisterPayload = z.input<typeof registerSchema>
+export type CreateGoalPayload = z.input<typeof createGoalSchema>
+export type UpdateGoalPayload = z.input<typeof updateGoalSchema>
+export type CreateHabitPayload = z.input<typeof createHabitSchema>
+export type JournalQuery = z.input<typeof journalQuerySchema>
+export type CreateJournalEntryPayload = z.input<typeof createJournalEntrySchema>
+export type SaveMorningCheckinPayload = z.input<typeof saveMorningCheckinSchema>
+export type SaveEveningReflectionPayload = z.input<typeof saveEveningReflectionSchema>

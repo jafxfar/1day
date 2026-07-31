@@ -1,26 +1,12 @@
 
+import type { BiographyDay, DayQuality } from '@life-os/contracts'
 import { useState, useEffect, useMemo } from 'react'
-import { useGetBiography } from '../hooks/backend/biography'
-import { Layout } from '../components/Layout'
-import { PageSkeleton, PageError } from '../components/PageSkeleton'
+import { useGetBiography } from '../entities/biography/model/useBiography'
+import { Layout } from '../shared/ui/Layout'
+import { PageSkeleton, PageError } from '../shared/ui/PageSkeleton'
 import { ChevronLeft, ChevronRight, Moon, Sun, BookOpen, CheckCircle2, XCircle, Trophy, Sprout, Inbox, Smile, Meh, Frown, Laugh, Zap } from 'lucide-react'
-import { cn } from '../lib/utils'
-import { getHabitIcon } from '../lib/icons'
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-type DayQuality = 'great' | 'good' | 'neutral' | 'poor' | 'no_data'
-
-interface HabitRecord { title: string; icon: string; completed: boolean }
-
-interface DaySummary {
-  date: string
-  mood: number | null; energy: number | null; sleepHours: number | null; focusText: string | null
-  eveningRating: number | null; eveningTags: string[]; wins: string | null; failures: string | null
-  habits: HabitRecord[]; habitsCompleted: number; habitsTotal: number
-  journalTitle: string | null; journalContent: string | null; journalMood: number | null; journalTags: string[]
-  score: number; quality: DayQuality
-}
+import { cn } from '../shared/lib/utils'
+import { getHabitIcon } from '../shared/lib/icons'
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
@@ -66,26 +52,22 @@ const getMoodIconLarge = (mood: number | null) => {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function Biography() {
-  const { data: rawData, loading, error, trigger: fetchBiography } = useGetBiography()
+  const { data: allDays = [], loading, error, trigger: fetchBiography } = useGetBiography()
 
-  const [allDays, setAllDays] = useState<DaySummary[]>([])
   const [viewDate, setViewDate] = useState(() => {
     const now = new Date()
     return new Date(now.getFullYear(), now.getMonth(), 1)
   })
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
 
-  useEffect(() => { void fetchBiography() }, [])
-  useEffect(() => {
-    if (Array.isArray(rawData)) setAllDays(rawData as DaySummary[])
-  }, [rawData])
+  useEffect(() => { void fetchBiography() }, [fetchBiography])
 
   const year = viewDate.getFullYear()
   const month = viewDate.getMonth()
 
   // Build date → DaySummary lookup
   const dayMap = useMemo(() => {
-    const m = new Map<string, DaySummary>()
+    const m = new Map<string, BiographyDay>()
     for (const d of allDays) m.set(d.date, d)
     return m
   }, [allDays])
@@ -275,7 +257,7 @@ export default function Biography() {
 
 // ─── Day Detail Panel ─────────────────────────────────────────────────────────
 
-function DayDetail({ day }: { day: DaySummary }) {
+function DayDetail({ day }: { day: BiographyDay }) {
   const qCfg = QUALITY_CONFIG[day.quality]
   const dateObj = new Date(day.date + 'T00:00:00')
   const label = dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
@@ -336,7 +318,6 @@ function DayDetail({ day }: { day: DaySummary }) {
           <Section icon={<CheckCircle2 className="w-4 h-4 text-green-500 dark:text-green-400" />} title={`Habits — ${day.habitsCompleted}/${day.habitsTotal}`}>
             <div className="space-y-1.5">
               {day.habits.map((h, i) => {
-                const HabitIcon = getHabitIcon(h.icon)
                 return (
                   <div key={i} className={cn(
                     'flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm',
@@ -345,7 +326,7 @@ function DayDetail({ day }: { day: DaySummary }) {
                       : 'bg-red-50 dark:bg-red-950/20',
                   )}>
                     <span className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                      <HabitIcon className="w-4 h-4 text-primary" />
+                      {getHabitIcon(h.icon, 'w-4 h-4 text-primary')}
                     </span>
                     <span className={cn('flex-1 font-medium', h.completed ? 'text-foreground' : 'text-muted-foreground line-through')}>
                       {h.title}

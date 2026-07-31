@@ -1,16 +1,14 @@
 
-import { useState, useEffect } from 'react'
-import { useGetJournalEntries, useCreateJournalEntry, useDeleteJournalEntry } from '../hooks/backend/journal'
-import { Layout } from '../components/Layout'
-import { PageSkeleton, PageError } from '../components/PageSkeleton'
-import { Button } from '../components/ui/button'
-import { Input } from '../components/ui/input'
-import { Textarea } from '../components/ui/textarea'
-import { Badge } from '../components/ui/badge'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog'
+import { useEffect, useState } from 'react'
+import { useCreateJournalEntry, useDeleteJournalEntry, useGetJournalEntries } from '../entities/journal/model/useJournal'
+import { Layout } from '../shared/ui/Layout'
+import { PageSkeleton, PageError } from '../shared/ui/PageSkeleton'
+import { Button } from '../shared/ui/button'
+import { Input } from '../shared/ui/input'
+import { Textarea } from '../shared/ui/textarea'
+import { Badge } from '../shared/ui/badge'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../shared/ui/dialog'
 import { Plus, BookOpen, Trash2 } from 'lucide-react'
-import type { JournalEntry } from '../lib/types'
-import { cast } from '../lib/types'
 
 const getMoodEmoji = (mood: number) => {
   if (mood >= 9) return '🤩'
@@ -30,19 +28,17 @@ const TAG_OPTIONS = [
 ]
 
 export default function Journal() {
-  const { data: rawEntries, loading, error, trigger: fetchEntries } = useGetJournalEntries()
+  const { data: entries = [], setData: setEntries, loading, error, trigger: fetchEntries } = useGetJournalEntries()
   const { trigger: createEntry, loading: creating } = useCreateJournalEntry()
   const { trigger: deleteEntry } = useDeleteJournalEntry()
 
-  const [entries,      setEntries]      = useState<JournalEntry[]>([])
   const [showCreate,   setShowCreate]   = useState(false)
   const [title,        setTitle]        = useState('')
   const [content,      setContent]      = useState('')
   const [mood,         setMood]         = useState(7)
   const [selectedTags, setSelectedTags] = useState<string[]>([])
 
-  useEffect(() => { void fetchEntries() }, [])
-  useEffect(() => { setEntries(cast.journalEntries(rawEntries)) }, [rawEntries])
+  useEffect(() => { void fetchEntries() }, [fetchEntries])
 
   const toggleTag = (tag: string) =>
     setSelectedTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag])
@@ -51,16 +47,19 @@ export default function Journal() {
     if (!title.trim() || !content.trim()) return
     const newEntry = await createEntry({ title: title.trim(), content: content.trim(), mood, energy: 7, tags: selectedTags })
     if (newEntry) {
-      const mapped = cast.journalEntries([newEntry])
-      if (mapped[0]) setEntries(prev => [mapped[0]!, ...prev])
+      setEntries(prev => [newEntry, ...(prev ?? [])])
     }
     setTitle(''); setContent(''); setMood(7); setSelectedTags([])
     setShowCreate(false)
   }
 
   const handleDelete = async (id: string) => {
-    setEntries(prev => prev.filter(e => e.id !== id))
-    await deleteEntry({ id })
+    const previousEntries = entries
+    setEntries(previousEntries.filter(entry => entry.id !== id))
+
+    if (!await deleteEntry({ id })) {
+      setEntries(previousEntries)
+    }
   }
 
   const avgMood = entries.length
