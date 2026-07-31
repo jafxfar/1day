@@ -54,7 +54,7 @@ const app = express()
 const PORT = Number(process.env['PORT'] ?? 3000)
 
 app.use(cors({
-  origin: ['http://localhost', 'http://localhost:5173', 'http://localhost:3000'],
+  origin: process.env['VITE_FRONTEND_URL'] ? [process.env['VITE_FRONTEND_URL']] : ['http://localhost', 'http://localhost:5173', 'http://localhost:3000'],
   credentials: true,
 }))
 app.use(express.json())
