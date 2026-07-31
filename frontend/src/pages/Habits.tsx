@@ -65,7 +65,9 @@ export default function Habits() {
     if (!title.trim()) return
     const newHabit = await createHabit({ title: title.trim(), type, icon: selectedIcon, category: 'general' })
     if (newHabit) setHabits(prev => [...(prev ?? []), newHabit])
-    setTitle(''); setSelectedIcon('Target'); setType('positive')
+    setTitle('')
+    setSelectedIcon('Target')
+    setType('positive')
     setShowCreate(false)
   }
 
@@ -86,60 +88,60 @@ export default function Habits() {
 
   return (
     <Layout>
-      <div className="px-4 pt-10 pb-4 space-y-5">
+      <main className="app-page space-y-7 px-4 pb-6 pt-8">
 
         {/* ── Header ── */}
-        <div className="flex items-center justify-between">
+        <header className="app-header flex items-end justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Habits</h1>
-            <p className="text-sm text-muted-foreground">{completedCount}/{habits.length} done today</p>
+            <p className="mb-1 text-xs font-medium tracking-wide text-muted-foreground">Daily rhythm</p>
+            <h1 className="text-4xl font-bold leading-none tracking-[-0.05em] text-foreground">Habits</h1>
+            <p className="mt-2 text-sm text-muted-foreground">{completedCount}/{habits.length} done today</p>
           </div>
-          <Button size="sm" className="rounded-xl gap-1.5" onClick={() => setShowCreate(true)}>
+          <Button size="sm" className="pressable h-11 rounded-2xl px-4" onClick={() => setShowCreate(true)}>
             <Plus className="w-4 h-4" />New
           </Button>
-        </div>
+        </header>
 
         {/* ── Stats ── */}
-        <div className="grid grid-cols-3 gap-2">
-          <div className="bg-card border border-border rounded-2xl p-3 text-center">
-            <CheckCircle2 className="w-4 h-4 text-green-500 dark:text-green-400 mx-auto mb-1" />
-            <p className="text-xl font-bold text-foreground">{completedCount}/{habits.length}</p>
-            <p className="text-[10px] text-muted-foreground">Today</p>
+        <section className="grid grid-cols-[1.15fr_0.85fr] gap-2" aria-label="Habit statistics">
+          <div className="lime-panel row-span-2 min-h-40 rounded-[28px] bg-primary p-5 text-primary-foreground">
+            <CheckCircle2 className="h-5 w-5" />
+            <p className="mt-10 text-4xl font-bold tracking-[-0.06em]">{completedCount}/{habits.length}</p>
+            <p className="mt-1 text-xs font-semibold">Done today</p>
           </div>
-          <div className="bg-card border border-border rounded-2xl p-3 text-center">
-            <Flame className="w-4 h-4 text-orange-500 dark:text-orange-400 mx-auto mb-1" />
-            <p className="text-xl font-bold text-foreground">{bestStreak}</p>
-            <p className="text-[10px] text-muted-foreground">Best Streak</p>
+          <div className="surface-paper rounded-[24px] bg-foreground p-4 text-background">
+            <Flame className="h-4 w-4 text-primary" />
+            <p className="mt-3 text-2xl font-bold tracking-tight">{bestStreak}</p>
+            <p className="text-[10px] text-background/55">Best streak</p>
           </div>
-          <div className="bg-card border border-border rounded-2xl p-3 text-center">
-            <Flame className="w-4 h-4 text-yellow-500 dark:text-yellow-400 mx-auto mb-1" />
-            <p className="text-xl font-bold text-foreground">{totalStreakDays}</p>
-            <p className="text-[10px] text-muted-foreground">Total Days</p>
+          <div className="surface-dark rounded-[20px] bg-card p-4">
+            <p className="text-2xl font-bold tracking-tight text-foreground">{totalStreakDays}</p>
+            <p className="text-[10px] text-muted-foreground">Total days</p>
           </div>
-        </div>
+        </section>
 
         {/* ── Build ── */}
         {positiveHabits.length > 0 && (
-          <div>
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Build ✅</p>
+          <section>
+            <h2 className="section-title mb-3 text-lg font-semibold tracking-tight text-foreground">Build</h2>
             <div className="space-y-2">
               {positiveHabits.map(h => (
                 <HabitCard key={h.id} habit={h} onToggle={handleToggle} onDelete={handleDelete} />
               ))}
             </div>
-          </div>
+          </section>
         )}
 
         {/* ── Break ── */}
         {negativeHabits.length > 0 && (
-          <div>
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Break 🚫</p>
+          <section>
+            <h2 className="section-title mb-3 text-lg font-semibold tracking-tight text-foreground">Break</h2>
             <div className="space-y-2">
               {negativeHabits.map(h => (
                 <HabitCard key={h.id} habit={h} onToggle={handleToggle} onDelete={handleDelete} />
               ))}
             </div>
-          </div>
+          </section>
         )}
 
         {habits.length === 0 && !loading && (
@@ -149,22 +151,24 @@ export default function Habits() {
             <p className="text-sm text-muted-foreground mt-1">Build your daily routines</p>
           </div>
         )}
-      </div>
+      </main>
 
       {/* ── Create Dialog ── */}
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
-        <DialogContent className="max-w-sm rounded-2xl mx-4">
-          <DialogHeader><DialogTitle>New Habit</DialogTitle></DialogHeader>
+        <DialogContent className="mx-4 max-w-sm rounded-[28px]">
+          <DialogHeader><DialogTitle>New habit</DialogTitle></DialogHeader>
           <div className="space-y-4 pt-1">
-            <Input placeholder="Habit name" value={title} onChange={e => setTitle(e.target.value)} className="rounded-xl" />
+            <Input placeholder="Habit name" value={title} onChange={e => setTitle(e.target.value)} className="rounded-2xl" />
             <div>
               <p className="text-xs text-muted-foreground mb-2">Choose icon</p>
               <div className="grid grid-cols-8 gap-1.5">
                 {HABIT_ICONS.map(icon => {
                   return (
                     <button key={icon} onClick={() => setSelectedIcon(icon)}
-                      className={`aspect-square flex items-center justify-center rounded-xl transition-all ${selectedIcon === icon ? 'bg-primary/10 ring-2 ring-primary/40 scale-110' : 'bg-muted hover:bg-accent'
+                      className={`pressable flex aspect-square items-center justify-center rounded-[14px] transition-all ${selectedIcon === icon ? 'bg-primary text-primary-foreground ring-2 ring-primary/40' : 'bg-muted hover:bg-accent'
                         }`}
+                      aria-label={`Choose ${icon} icon`}
+                      aria-pressed={selectedIcon === icon}
                     >
                       {getHabitIcon(icon, `w-5 h-5 ${selectedIcon === icon ? 'text-primary' : 'text-muted-foreground'}`)}
                     </button>
@@ -175,16 +179,17 @@ export default function Habits() {
             <div className="flex gap-2">
               {(['positive', 'negative'] as const).map(t => (
                 <button key={t} onClick={() => setType(t)}
-                  className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all border ${type === t
+                  className={`pressable flex-1 rounded-2xl border py-2.5 text-sm font-medium transition-all ${type === t
                       ? 'bg-primary text-primary-foreground border-primary'
                       : 'bg-card text-muted-foreground border-border hover:text-foreground'
                     }`}
+                  aria-pressed={type === t}
                 >
                   {t === 'positive' ? '✅ Build' : '🚫 Break'}
                 </button>
               ))}
             </div>
-            <Button className="w-full rounded-xl" onClick={() => void handleCreate()} disabled={!title.trim() || creating}>
+            <Button className="pressable w-full rounded-2xl" onClick={() => void handleCreate()} disabled={!title.trim() || creating}>
               {creating ? 'Adding…' : 'Add Habit'}
             </Button>
           </div>
@@ -205,38 +210,39 @@ function HabitCard({
   onDelete: (id: string) => void
 }) {
   return (
-    <div className={`flex items-center gap-3 rounded-2xl px-4 py-3.5 border transition-all ${habit.completedToday
-        ? 'bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800'
-        : 'bg-card border-border'
+    <article className={`surface-paper flex items-center gap-3 rounded-[18px] bg-foreground px-4 py-3.5 text-background transition-all ${habit.completedToday
+        ? 'opacity-60'
+        : ''
       }`}>
-      <span className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-        {getHabitIcon(habit.icon, 'w-4 h-4 text-primary')}
+      <span className="flex size-9 shrink-0 items-center justify-center rounded-[14px] bg-primary">
+        {getHabitIcon(habit.icon, 'w-4 h-4 text-primary-foreground')}
       </span>
       <div className="flex-1 min-w-0">
-        <p className={`text-sm font-medium ${habit.completedToday ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
+        <p className={`text-sm font-semibold ${habit.completedToday ? 'line-through text-background/45' : 'text-background'}`}>
           {habit.title}
         </p>
         <div className="flex items-center gap-1.5 mt-0.5">
-          <Flame className="w-3 h-3 text-orange-400 dark:text-orange-300" />
-          <span className="text-xs text-muted-foreground">{habit.currentStreak} day streak</span>
+          <Flame className="h-3 w-3 text-primary" />
+          <span className="text-xs text-background/55">{habit.currentStreak} day streak</span>
         </div>
       </div>
       <button
         onClick={() => onDelete(habit.id)}
-        className="p-1 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+        className="pressable rounded-lg p-1 text-background/45 transition-colors hover:bg-destructive/10 hover:text-destructive"
         aria-label="Delete habit"
       >
         <X className="w-3.5 h-3.5" />
       </button>
       <button
         onClick={() => onToggle(habit.id)}
-        className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all shrink-0 ${habit.completedToday
-            ? 'border-green-500 bg-green-500 dark:border-green-400 dark:bg-green-400'
-            : 'border-border hover:border-primary/60'
+        className={`pressable flex size-9 shrink-0 items-center justify-center rounded-full border-2 transition-all ${habit.completedToday
+            ? 'border-primary bg-primary'
+            : 'border-background/20 hover:border-primary'
           }`}
+        aria-label={`${habit.completedToday ? 'Mark incomplete' : 'Mark complete'}: ${habit.title}`}
       >
         {habit.completedToday && <span className="text-white text-sm font-bold leading-none">✓</span>}
       </button>
-    </div>
+    </article>
   )
 }

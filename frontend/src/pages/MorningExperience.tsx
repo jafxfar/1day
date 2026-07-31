@@ -6,15 +6,15 @@ import { Input } from '../shared/ui/input'
 import { Slider } from '../shared/ui/slider'
 import { useCheckins } from '../entities/checkins/model/useCheckinsContext'
 import { useSaveMorningCheckin } from '../entities/checkins/model/useCheckins'
-import { ChevronLeft, Moon, Sun, BatteryCharging, MessageSquare, Target, CheckCircle2, Smile, AlertTriangle, Frown, Meh, Zap, Laugh } from 'lucide-react'
+import { AlertTriangle, BatteryCharging, CheckCircle2, ChevronLeft, Frown, Laugh, Meh, MessageSquare, Moon, Smile, Sun, Target, Zap } from 'lucide-react'
 
 const SLEEP_OPTIONS = [4, 5, 6, 7, 8, 9, 10] as const
 const MOODS = [
-  { value: 1, icon: Frown, label: 'Terrible', color: 'text-red-500' },
-  { value: 2, icon: Frown, label: 'Bad', color: 'text-orange-400' },
-  { value: 3, icon: Meh, label: 'Okay', color: 'text-amber-500' },
-  { value: 4, icon: Smile, label: 'Good', color: 'text-green-400' },
-  { value: 5, icon: Laugh, label: 'Amazing', color: 'text-green-500' },
+  { value: 1, icon: Frown, label: 'Terrible' },
+  { value: 2, icon: Frown, label: 'Bad' },
+  { value: 3, icon: Meh, label: 'Okay' },
+  { value: 4, icon: Smile, label: 'Good' },
+  { value: 5, icon: Laugh, label: 'Amazing' },
 ]
 const FOCUS_SUGGESTIONS = [
   'Deep work on my main project',
@@ -46,7 +46,10 @@ export default function MorningExperience() {
   })
 
   const handleNext = async () => {
-    if (step < STEPS.length - 1) { setStep(s => s + 1); return }
+    if (step < STEPS.length - 1) {
+      setStep(s => s + 1)
+      return
+    }
 
     await saveCheckin({
       sleepHours,
@@ -62,162 +65,166 @@ export default function MorningExperience() {
   const current = STEPS[step]!
 
   return (
-    <div className="flex justify-center min-h-screen bg-background">
-      <div className="w-full max-w-md flex flex-col min-h-screen">
-
-        {/* Header */}
-        <div className="flex items-center justify-between px-2 pt-2 pb-0">
+    <main className="app-page min-h-dvh bg-[#141414] px-4 py-4 text-[#F4F4F0] sm:px-6 sm:py-6">
+      <div className="surface-dark mx-auto flex min-h-[calc(100dvh-2rem)] w-full max-w-md flex-col rounded-[32px] bg-[#1D1D1D] p-5 sm:min-h-[calc(100dvh-3rem)] sm:p-7">
+        <header className="app-header flex items-center justify-between">
           <button
-            onClick={() => step > 0 ? setStep(s => s - 1) : navigate('/welcome')}
-            className="py-2 rounded-xl hover:bg-accent transition-colors"
+            type="button"
+            aria-label={step > 0 ? 'Go to previous question' : 'Back to welcome'}
+            onClick={() => (step > 0 ? setStep(s => s - 1) : navigate('/welcome'))}
+            className="icon-button pressable flex size-11 items-center justify-center rounded-[16px] border border-white/10 transition hover:bg-white/5 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D7FF35]"
           >
-            <ChevronLeft className="w-1.5 h-1.5 text-foreground" />
+            <ChevronLeft className="size-5" />
           </button>
-          <div className="flex gap-0.5 items-center">
+          <div className="flex items-center gap-1.5" aria-label={`Step ${step + 1} of ${STEPS.length}`}>
             {STEPS.map((_, i) => (
-              <div key={i} className={`h-0.5 rounded-full transition-all duration-300 ${i < step ? 'w-1.5 bg-primary' : i === step ? 'w-2 bg-primary' : 'w-0.5 bg-muted'
-                }`} />
+              <span
+                key={i}
+                className={`h-1.5 rounded-full transition-all duration-300 ${
+                  i <= step ? 'w-7 bg-[#D7FF35]' : 'w-2 bg-white/15'
+                }`}
+              />
             ))}
           </div>
-          <div className="w-9" />
-        </div>
+          <span className="text-xs font-bold tabular-nums text-[#92928D]">
+            {step + 1}/{STEPS.length}
+          </span>
+        </header>
 
-        <p className="px-2 text-sm text-muted-foreground">{today}</p>
-
-        {/* Content */}
-        <div className="flex-1 px-2 py-2">
-          <div className="space-y-1 mb-4">
-            <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
-              <span>{current.title}</span>
-              <current.icon className="w-8 h-8 text-primary shrink-0 animate-pulse" />
-            </h1>
-            <p className="text-muted-foreground">{current.subtitle}</p>
+        <section className="flex flex-1 flex-col py-8">
+          <p className="mb-8 text-xs font-semibold uppercase tracking-[0.16em] text-[#92928D]">{today}</p>
+          <div className="mb-8">
+            <div className="mb-4 flex size-12 items-center justify-center rounded-[16px] bg-[#D7FF35] text-[#151515]">
+              <current.icon className="size-6" strokeWidth={2.2} />
+            </div>
+            <h1 className="text-balance text-5xl font-black leading-[0.95] tracking-[-0.055em]">{current.title}</h1>
+            <p className="mt-3 text-base text-[#92928D]">{current.subtitle}</p>
           </div>
 
-          {/* Step 0 — Sleep */}
-          {step === 0 && (
-            <div className="space-y-1">
-              <div className="flex items-center gap-1 mb-1">
-                <Moon className="w-1.5 h-1.5 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">Hours of sleep last night</span>
-              </div>
-              <div className="grid grid-cols-4 gap-[8px]">
-                {SLEEP_OPTIONS.map(h => (
-                  <button key={h} onClick={() => setSleep(h)}
-                    className={`py-1.5 rounded-2xl text-base font-bold transition-all ${sleepHours === h
-                        ? 'bg-primary text-primary-foreground shadow-app-sm scale-105'
-                        : 'bg-card border border-border text-foreground hover:border-primary/40'
+          <div className="surface-paper rounded-[28px] bg-[#F4F4F0] p-4 text-[#151515] sm:p-5">
+            {step === 0 && (
+              <div>
+                <p className="mb-4 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.12em] text-[#92928D]">
+                  <Moon className="size-4" />
+                  Hours slept
+                </p>
+                <div className="grid grid-cols-4 gap-2">
+                  {SLEEP_OPTIONS.map(h => (
+                    <button
+                      key={h}
+                      type="button"
+                      aria-pressed={sleepHours === h}
+                      onClick={() => setSleep(h)}
+                      className={`pressable min-h-12 rounded-[16px] text-base font-black transition active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#151515] ${
+                        sleepHours === h
+                          ? 'bg-[#1D1D1D] text-[#D7FF35]'
+                          : 'bg-[#F4F4F0] text-[#92928D] hover:text-[#151515]'
                       }`}
-                  >
-                    {h}h
-                  </button>
-                ))}
-              </div>
-              <div className="text-center text-sm text-muted-foreground mt-1.5 font-medium">
-                {sleepHours >= 8 ? (
-                  <span className="flex items-center justify-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-green-500" /> Excellent rest!</span>
-                ) : sleepHours >= 7 ? (
-                  <span className="flex items-center justify-center gap-1.5"><Smile className="w-4 h-4 text-green-400" /> Good sleep</span>
-                ) : sleepHours >= 6 ? (
-                  <span className="flex items-center justify-center gap-1.5"><AlertTriangle className="w-4 h-4 text-amber-500 animate-pulse" /> A bit short</span>
-                ) : (
-                  <span className="flex items-center justify-center gap-1.5"><Moon className="w-4 h-4 text-blue-400" /> Need more rest</span>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Step 1 — Energy */}
-          {step === 1 && (
-            <div className="space-y-2">
-              <div className="text-center">
-                <span className="text-7xl font-bold text-foreground">{energy[0]}</span>
-                <span className="text-2xl text-muted-foreground">/10</span>
-              </div>
-              <Slider value={energy} onValueChange={setEnergy} min={1} max={10} step={1} />
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span className="flex items-center gap-1">Exhausted <Frown className="w-3.5 h-3.5 text-muted-foreground" /></span>
-                <span className="flex items-center gap-1">Energized <Zap className="w-3.5 h-3.5 text-yellow-500" /></span>
-              </div>
-            </div>
-          )}
-
-          {/* Step 2 — Mood */}
-          {step === 2 && (
-            <div className="space-y-2">
-              <div className="grid grid-cols-5 gap-[8px]">
-                {MOODS.map(({ value, icon: Icon, label, color }) => (
-                  <button key={value} onClick={() => setMood(value)}
-                    className={`flex flex-col items-center gap-2.5 py-3 rounded-2xl border transition-all ${mood === value
-                        ? 'border-primary bg-primary/5 scale-105 shadow-app-sm'
-                        : 'border-border bg-card hover:border-primary/40'
-                      }`}
-                  >
-                    <Icon className={`w-6 h-6 ${color}`} />
-                    <span className="text-[10px] text-muted-foreground leading-tight text-center">{label}</span>
-                  </button>
-                ))}
-              </div>
-              <div className="bg-card border border-border rounded-2xl p-4 text-center">
-                <div className="flex items-center justify-center gap-2 mb-1.5">
-                  {(() => {
-                    const activeMood = MOODS.find(m => m.value === mood)
-                    if (!activeMood) return null
-                    const ActiveIcon = activeMood.icon
-                    return (
-                      <>
-                        <ActiveIcon className={`w-6 h-6 ${activeMood.color}`} />
-                        <span className="font-bold text-foreground text-lg">{activeMood.label}</span>
-                      </>
-                    )
-                  })()}
+                    >
+                      {h}h
+                    </button>
+                  ))}
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  {mood >= 4 ? "That's wonderful! Let's make the most of today."
-                    : mood === 3 ? "That's okay. Small steps lead to big changes."
-                      : "It's alright. Be kind to yourself today."}
+                <div className="mt-5 text-sm font-semibold text-[#92928D]">
+                  {sleepHours >= 8 ? (
+                    <span className="flex items-center gap-2"><CheckCircle2 className="size-4" /> Excellent rest</span>
+                  ) : sleepHours >= 7 ? (
+                    <span className="flex items-center gap-2"><Smile className="size-4" /> Solid sleep</span>
+                  ) : sleepHours >= 6 ? (
+                    <span className="flex items-center gap-2"><AlertTriangle className="size-4" /> A little short</span>
+                  ) : (
+                    <span className="flex items-center gap-2"><Moon className="size-4" /> Protect your energy today</span>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {step === 1 && (
+              <div className="py-2">
+                <div className="mb-8 flex items-end justify-center">
+                  <span className="text-8xl font-black leading-none tracking-[-0.07em] tabular-nums">{energy[0]}</span>
+                  <span className="mb-2 text-xl font-bold text-[#92928D]">/10</span>
+                </div>
+                <Slider value={energy} onValueChange={setEnergy} min={1} max={10} step={1} aria-label="Energy level" />
+                <div className="mt-4 flex justify-between text-xs font-semibold text-[#92928D]">
+                  <span className="flex items-center gap-1.5"><Frown className="size-4" /> Exhausted</span>
+                  <span className="flex items-center gap-1.5">Energized <Zap className="size-4" /></span>
+                </div>
+              </div>
+            )}
+
+            {step === 2 && (
+              <div>
+                <div className="grid grid-cols-5 gap-2">
+                  {MOODS.map(({ value, icon: Icon, label }) => (
+                    <button
+                      key={value}
+                      type="button"
+                      aria-label={label}
+                      aria-pressed={mood === value}
+                      onClick={() => setMood(value)}
+                      className={`pressable flex min-h-20 flex-col items-center justify-center gap-2 rounded-[16px] transition active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#151515] ${
+                        mood === value ? 'bg-[#1D1D1D] text-[#D7FF35]' : 'bg-[#F4F4F0] text-[#92928D] hover:text-[#151515]'
+                      }`}
+                    >
+                      <Icon className="size-6" />
+                      <span className="text-[10px] font-bold">{label}</span>
+                    </button>
+                  ))}
+                </div>
+                <p className="mt-5 text-sm leading-6 text-[#92928D]">
+                  {mood >= 4
+                    ? 'Use that momentum on the work that matters.'
+                    : mood === 3
+                      ? 'Small, deliberate steps are enough today.'
+                      : 'Lower the bar, protect your energy, and be kind to yourself.'}
                 </p>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Step 3 — Focus */}
-          {step === 3 && (
-            <div className="space-y-[14px]">
-              <Input
-                placeholder="Write your main focus for today..."
-                value={focus}
-                onChange={e => setFocus(e.target.value)}
-                className="h-4 text-base bg-background!  rounded-xl"
-              />
-              <p className="text-xs text-muted-foreground font-medium">Quick picks:</p>
-              <div className="space-y-[8px]">
-                {FOCUS_SUGGESTIONS.map(s => (
-                  <button key={s} onClick={() => setFocus(s)}
-                    className={`w-full text-left p-1 rounded-xl border text-sm transition-all ${focus === s
-                        ? 'border-primary bg-primary/5 text-foreground font-medium'
-                        : 'border-border bg-card text-muted-foreground hover:text-foreground hover:border-primary/30'
+            {step === 3 && (
+              <div>
+                <label htmlFor="daily-focus" className="mb-2 block text-xs font-bold uppercase tracking-[0.12em] text-[#92928D]">
+                  One clear outcome
+                </label>
+                <Input
+                  id="daily-focus"
+                  placeholder="What needs your best attention?"
+                  value={focus}
+                  onChange={e => setFocus(e.target.value)}
+                  className="h-14 rounded-[16px] border-[#151515]/15 bg-[#F4F4F0] px-4 text-base text-[#151515] placeholder:text-[#92928D] focus-visible:border-[#151515] focus-visible:ring-[#151515]/20"
+                />
+                <p className="mb-2 mt-5 text-xs font-bold uppercase tracking-[0.12em] text-[#92928D]">Quick picks</p>
+                <div className="space-y-2">
+                  {FOCUS_SUGGESTIONS.map(s => (
+                    <button
+                      key={s}
+                      type="button"
+                      aria-pressed={focus === s}
+                      onClick={() => setFocus(s)}
+                      className={`pressable w-full rounded-[16px] px-4 py-3 text-left text-sm font-semibold transition active:scale-[0.985] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#151515] ${
+                        focus === s ? 'bg-[#1D1D1D] text-[#D7FF35]' : 'bg-[#F4F4F0] text-[#92928D] hover:text-[#151515]'
                       }`}
-                  >
-                    {s}
-                  </button>
-                ))}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        </section>
 
-        {/* CTA */}
-        <div className="px-2 pb-3">
+        <footer>
           <Button
-            className="w-full h-4 text-base font-semibold rounded-2xl"
+            className="pressable h-14 w-full rounded-[18px] bg-[#D7FF35] text-base font-bold text-[#151515] hover:bg-[#D7FF35]/90 active:scale-[0.985] focus-visible:ring-[#D7FF35]/60"
             onClick={() => void handleNext()}
             disabled={saving}
           >
-            {saving ? 'Saving…' : step === STEPS.length - 1 ? 'Start my day 🚀' : 'Continue'}
+            {saving ? 'Saving…' : step === STEPS.length - 1 ? 'Start my day' : 'Continue'}
           </Button>
-        </div>
+        </footer>
       </div>
-    </div>
+    </main>
   )
 }

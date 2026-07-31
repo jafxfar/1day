@@ -14,12 +14,12 @@ const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
 const WEEKDAYS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su']
 const pad = (n: number) => String(n).padStart(2, '0')
 
-const QUALITY_CONFIG: Record<DayQuality, { label: string; dot: string; cell: string; text: string }> = {
-  great: { label: 'Great', dot: 'bg-green-500', cell: 'bg-green-500 dark:bg-green-500', text: 'text-white' },
-  good: { label: 'Good', dot: 'bg-green-300 dark:bg-green-700', cell: 'bg-green-300 dark:bg-green-700', text: 'text-green-900 dark:text-white' },
-  neutral: { label: 'Neutral', dot: 'bg-yellow-400', cell: 'bg-yellow-400 dark:bg-yellow-500', text: 'text-yellow-900 dark:text-white' },
-  poor: { label: 'Poor', dot: 'bg-red-400', cell: 'bg-red-400 dark:bg-red-500', text: 'text-white' },
-  no_data: { label: 'No data', dot: 'bg-muted', cell: '', text: 'text-muted-foreground' },
+const QUALITY_CONFIG: Record<DayQuality, { label: string, dot: string, cell: string, text: string }> = {
+  great: { label: 'Great', dot: 'bg-[#D7FF35]', cell: 'bg-[#D7FF35]', text: 'text-[#151515]' },
+  good: { label: 'Good', dot: 'bg-[#8eaa4d]', cell: 'bg-[#8eaa4d]', text: 'text-[#151515]' },
+  neutral: { label: 'Neutral', dot: 'bg-[#5f6657]', cell: 'bg-[#5f6657]', text: 'text-white' },
+  poor: { label: 'Poor', dot: 'bg-[#343831]', cell: 'bg-[#343831]', text: 'text-white' },
+  no_data: { label: 'No data', dot: 'bg-white/15', cell: '', text: 'text-muted-foreground' },
 }
 
 const getMoodIcon = (mood: number | null) => {
@@ -105,45 +105,47 @@ export default function Biography() {
 
   return (
     <Layout>
-      <div className="px-4 pt-10 pb-4 space-y-4">
+      <main className="app-page">
+      <div className="mx-auto w-full max-w-6xl space-y-6 px-4 pb-8 pt-8 sm:px-6 sm:pt-12">
 
         {/* ── Header ── */}
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Biography</h1>
-          <p className="text-sm text-muted-foreground">Your life, day by day</p>
-        </div>
+        <header className="app-header">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.24em] text-[#D7FF35]">Life in review</p>
+          <h1 className="text-4xl font-black leading-none tracking-[-0.055em] text-foreground sm:text-5xl">Biography</h1>
+          <p className="mt-3 text-sm text-muted-foreground">The shape of your days, recorded over time.</p>
+        </header>
 
         {/* ── Month navigator ── */}
-        <div className="bg-card border border-border rounded-2xl p-4">
-          <div className="flex items-center justify-between mb-4">
+        <section className="surface-dark rounded-[28px] p-4 sm:p-7" aria-labelledby="biography-month">
+          <div className="mb-6 flex items-center justify-between">
             <button
               onClick={() => setViewDate(new Date(year, month - 1, 1))}
-              className="p-2 rounded-xl hover:bg-accent transition-colors"
+              className="icon-button pressable hover:bg-white/10"
               aria-label="Previous month"
             >
-              <ChevronLeft className="w-5 h-5 text-foreground" />
+              <ChevronLeft className="h-5 w-5 text-foreground" aria-hidden="true" />
             </button>
             <div className="text-center">
-              <h2 className="font-semibold text-foreground">{MONTHS[month]} {year}</h2>
+              <h2 id="biography-month" className="text-2xl font-black tracking-[-0.04em] text-foreground sm:text-3xl">{MONTHS[month]} <span className="text-[#D7FF35]">{year}</span></h2>
               {monthDays.length > 0 && (
-                <p className="text-xs text-muted-foreground">{monthDays.length} days recorded</p>
+                <p className="mt-1 text-xs text-muted-foreground">{monthDays.length} days recorded</p>
               )}
             </div>
             <button
               onClick={() => setViewDate(new Date(year, month + 1, 1))}
-              className="p-2 rounded-xl hover:bg-accent transition-colors"
+              className="icon-button pressable hover:bg-white/10"
               aria-label="Next month"
             >
-              <ChevronRight className="w-5 h-5 text-foreground" />
+              <ChevronRight className="h-5 w-5 text-foreground" aria-hidden="true" />
             </button>
           </div>
 
           {/* Legend */}
-          <div className="flex items-center gap-3 mb-4 flex-wrap">
+          <div className="mb-5 flex flex-wrap items-center justify-center gap-x-4 gap-y-2" aria-label="Day quality legend">
             {(['great', 'good', 'neutral', 'poor'] as DayQuality[]).map(q => (
               <div key={q} className="flex items-center gap-1.5">
                 <div className={cn('w-3 h-3 rounded-sm', QUALITY_CONFIG[q].dot)} />
-                <span className="text-[11px] text-muted-foreground">{QUALITY_CONFIG[q].label}</span>
+                <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">{QUALITY_CONFIG[q].label}</span>
               </div>
             ))}
           </div>
@@ -151,12 +153,12 @@ export default function Biography() {
           {/* Weekday labels — Monday first */}
           <div className="grid grid-cols-7 mb-1">
             {WEEKDAYS.map(d => (
-              <div key={d} className="text-center text-[11px] text-muted-foreground font-medium py-1">{d}</div>
+              <div key={d} className="py-2 text-center text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">{d}</div>
             ))}
           </div>
 
           {/* Day grid */}
-          <div className="grid grid-cols-7 gap-1">
+          <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
             {/* Blank cells before first day */}
             {Array.from({ length: firstWeekday }).map((_, i) => <div key={`b-${i}`} />)}
 
@@ -175,11 +177,13 @@ export default function Biography() {
                 <button
                   key={day}
                   onClick={() => setSelectedDate(prev => prev === ds ? null : ds)}
+                  aria-label={`${MONTHS[month]} ${day}, ${year}${hasData ? `, ${qCfg.label}` : ', no data'}`}
+                  aria-pressed={isSelected}
                   className={cn(
-                    'relative flex flex-col items-center justify-center aspect-square rounded-xl text-xs font-semibold transition-all',
-                    hasData ? cn(qCfg.cell, qCfg.text) : 'text-muted-foreground hover:bg-accent',
-                    isToday && 'ring-2 ring-offset-1 ring-foreground ring-offset-background',
-                    isSelected && 'ring-2 ring-offset-1 ring-primary ring-offset-background scale-110 z-10',
+                    'pressable relative flex aspect-square flex-col items-center justify-center rounded-xl text-xs font-bold tabular-nums transition-all sm:rounded-2xl sm:text-sm',
+                    hasData ? cn(qCfg.cell, qCfg.text) : 'text-muted-foreground hover:bg-white/10',
+                    isToday && 'outline-2 outline-offset-2 outline-white',
+                    isSelected && 'z-10 outline-2 outline-offset-2 outline-[#D7FF35]',
                   )}
                 >
                   {day}
@@ -193,64 +197,64 @@ export default function Biography() {
               )
             })}
           </div>
-        </div>
+        </section>
 
         {/* ── Monthly stats ── */}
         {monthDays.length > 0 && (
-          <div className="grid grid-cols-4 gap-2">
+          <section className="grid grid-cols-4 overflow-hidden rounded-3xl bg-[#D7FF35] text-[#151515]" aria-label="Monthly day quality">
             {[
-              { label: 'Great', value: qualityCounts.great, dot: 'bg-green-500' },
-              { label: 'Good', value: qualityCounts.good, dot: 'bg-green-300' },
-              { label: 'Neutral', value: qualityCounts.neutral, dot: 'bg-yellow-400' },
-              { label: 'Poor', value: qualityCounts.poor, dot: 'bg-red-400' },
-            ].map(({ label, value, dot }) => (
-              <div key={label} className="bg-card border border-border rounded-xl p-2.5 text-center">
-                <div className={cn('w-2.5 h-2.5 rounded-sm mx-auto mb-1', dot)} />
-                <p className="text-lg font-bold text-foreground">{value}</p>
-                <p className="text-[10px] text-muted-foreground">{label}</p>
+              { label: 'Great', value: qualityCounts.great },
+              { label: 'Good', value: qualityCounts.good },
+              { label: 'Neutral', value: qualityCounts.neutral },
+              { label: 'Poor', value: qualityCounts.poor },
+            ].map(({ label, value }, index) => (
+              <div key={label} className={cn('p-4 text-center sm:p-5', index > 0 && 'border-l border-[#151515]/15')}>
+                <p className="text-2xl font-black tabular-nums sm:text-3xl">{value}</p>
+                <p className="mt-1 text-[9px] font-bold uppercase tracking-[0.14em] text-[#151515]/75">{label}</p>
               </div>
             ))}
-          </div>
+          </section>
         )}
 
         {/* ── Average metrics ── */}
         {monthDays.length > 0 && (
-          <div className="flex gap-2">
+          <section className="surface-dark grid grid-cols-3 divide-x divide-white/10 overflow-hidden rounded-3xl" aria-label="Monthly averages">
             {avgMood !== null && (
-              <div className="flex-1 bg-card border border-border rounded-xl p-3 text-center">
-                <div className="flex justify-center min-h-[1.5rem]">{getMoodIconLarge(avgMood)}</div>
-                <p className="text-xs text-muted-foreground mt-1.5">Avg mood {avgMood}/5</p>
+              <div className="p-4 text-center sm:p-5">
+                <div className="flex min-h-6 justify-center">{getMoodIconLarge(avgMood)}</div>
+                <p className="mt-1.5 text-xs text-muted-foreground">Mood {avgMood}/5</p>
               </div>
             )}
             {avgHabitRate !== null && (
-              <div className="flex-1 bg-card border border-border rounded-xl p-3 text-center">
-                <p className="text-xl font-bold text-foreground">{avgHabitRate}%</p>
-                <p className="text-xs text-muted-foreground mt-0.5">Habit rate</p>
+              <div className="p-4 text-center sm:p-5">
+                <p className="text-2xl font-black tabular-nums text-foreground">{avgHabitRate}%</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">Habit rate</p>
               </div>
             )}
-            <div className="flex-1 bg-card border border-border rounded-xl p-3 text-center">
-              <p className="text-xl font-bold text-foreground">
+            <div className="p-4 text-center sm:p-5">
+              <p className="text-2xl font-black tabular-nums text-foreground">
                 {monthDays.filter(d => d.journalTitle !== null).length}
               </p>
-              <p className="text-xs text-muted-foreground mt-0.5">Journal entries</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">Journal entries</p>
             </div>
-          </div>
+          </section>
         )}
 
         {/* ── Empty month ── */}
         {monthDays.length === 0 && (
-          <div className="bg-card border border-border rounded-2xl p-6 text-center flex flex-col items-center justify-center">
-            <Inbox className="w-12 h-12 text-muted-foreground/60 mb-2 animate-pulse" />
-            <p className="font-medium text-foreground">No data for this month</p>
-            <p className="text-sm text-muted-foreground mt-1">
+          <section className="surface-dark flex min-h-56 flex-col items-center justify-center rounded-[28px] p-7 text-center">
+            <Inbox className="mb-4 h-10 w-10 text-[#D7FF35]" strokeWidth={1.5} aria-hidden="true" />
+            <p className="text-xl font-black tracking-tight text-foreground">No days recorded</p>
+            <p className="mt-2 max-w-sm text-sm leading-relaxed text-muted-foreground">
               Start your morning check-in to begin recording your biography.
             </p>
-          </div>
+          </section>
         )}
 
         {/* ── Day detail ── */}
         {selectedDay && <DayDetail day={selectedDay} />}
       </div>
+      </main>
     </Layout>
   )
 }
@@ -263,20 +267,20 @@ function DayDetail({ day }: { day: BiographyDay }) {
   const label = dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
 
   return (
-    <div className="bg-card border border-border rounded-2xl overflow-hidden">
+    <article className="surface-dark overflow-hidden rounded-[28px]" aria-labelledby={`day-${day.date}`}>
       {/* Colored top bar */}
-      <div className={cn('h-1.5', day.quality !== 'no_data' ? qCfg.dot : 'bg-border')} />
+      <div className={cn('h-1.5', day.quality !== 'no_data' ? qCfg.dot : 'bg-white/10')} />
 
-      <div className="p-4 space-y-4">
+      <div className="space-y-6 p-5 sm:p-7">
         {/* Date + quality */}
-        <div className="flex items-center justify-between">
-          <h3 className="font-bold text-foreground text-base">{label}</h3>
+        <header className="flex items-start justify-between gap-4 border-b border-white/10 pb-5">
+          <h3 id={`day-${day.date}`} className="max-w-md text-2xl font-black leading-tight tracking-[-0.04em] text-foreground sm:text-3xl">{label}</h3>
           {day.quality !== 'no_data' && (
-            <span className={cn('text-xs font-semibold px-2.5 py-1 rounded-full', qCfg.cell, qCfg.text)}>
+            <span className={cn('rounded-lg px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em]', qCfg.cell, qCfg.text)}>
               {qCfg.label}
             </span>
           )}
-        </div>
+        </header>
 
         {/* Morning check-in */}
         {(day.mood !== null || day.energy !== null || day.sleepHours !== null) && (
@@ -305,7 +309,7 @@ function DayDetail({ day }: { day: BiographyDay }) {
               )}
             </div>
             {day.focusText && (
-              <div className="mt-2 bg-muted/40 rounded-xl px-3 py-2">
+              <div className="mt-3 border-l-2 border-[#D7FF35] py-1 pl-4">
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-0.5">Focus</p>
                 <p className="text-sm text-foreground font-medium">{day.focusText}</p>
               </div>
@@ -320,13 +324,13 @@ function DayDetail({ day }: { day: BiographyDay }) {
               {day.habits.map((h, i) => {
                 return (
                   <div key={i} className={cn(
-                    'flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm',
+                    'flex items-center gap-2.5 border-b border-white/10 px-1 py-3 text-sm',
                     h.completed
-                      ? 'bg-green-50 dark:bg-green-950/20'
-                      : 'bg-red-50 dark:bg-red-950/20',
+                      ? 'text-foreground'
+                      : 'text-muted-foreground',
                   )}>
-                    <span className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                      {getHabitIcon(h.icon, 'w-4 h-4 text-primary')}
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#D7FF35]">
+                      {getHabitIcon(h.icon, 'w-4 h-4 text-[#151515]')}
                     </span>
                     <span className={cn('flex-1 font-medium', h.completed ? 'text-foreground' : 'text-muted-foreground line-through')}>
                       {h.title}
@@ -389,8 +393,9 @@ function DayDetail({ day }: { day: BiographyDay }) {
 
         {/* Journal */}
         {day.journalTitle && (
-          <Section icon={<BookOpen className="w-4 h-4 text-purple-500 dark:text-purple-400" />} title="Journal">
-            <p className="font-semibold text-foreground text-sm">{day.journalTitle}</p>
+          <Section icon={<BookOpen className="h-4 w-4 text-[#D7FF35]" />} title="Journal">
+            <div className="surface-paper rounded-2xl p-4 text-[#151515]">
+            <p className="text-sm font-bold">{day.journalTitle}</p>
             {day.journalMood !== null && (
               <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1.5">
                 <span>Mood:</span>
@@ -399,17 +404,18 @@ function DayDetail({ day }: { day: BiographyDay }) {
               </div>
             )}
             {day.journalContent && (
-              <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed line-clamp-4">
+              <p className="mt-2 text-sm leading-relaxed text-[#151515]/70 line-clamp-4">
                 {day.journalContent}
               </p>
             )}
             {day.journalTags.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mt-2">
                 {day.journalTags.map(tag => (
-                  <span key={tag} className="text-[11px] px-2 py-0.5 bg-muted rounded-full text-muted-foreground">#{tag}</span>
+                  <span key={tag} className="text-[11px] font-semibold text-[#151515]/65">#{tag}</span>
                 ))}
               </div>
             )}
+            </div>
           </Section>
         )}
 
@@ -418,27 +424,27 @@ function DayDetail({ day }: { day: BiographyDay }) {
           <p className="text-center text-sm text-muted-foreground py-2">No data recorded for this day</p>
         )}
       </div>
-    </div>
+    </article>
   )
 }
 
 // ─── Helper sub-components ────────────────────────────────────────────────────
 
-function Section({ icon, title, children }: { icon: React.ReactNode; title: string; children: React.ReactNode }) {
+function Section({ icon, title, children }: { icon: React.ReactNode, title: string, children: React.ReactNode }) {
   return (
-    <div>
-      <div className="flex items-center gap-1.5 mb-2">
-        {icon}
-        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{title}</p>
+    <section className="relative border-l border-white/15 pl-5 sm:pl-6">
+      <div className="mb-3 flex items-center gap-2">
+        <span className="absolute -left-2 flex h-4 w-4 items-center justify-center rounded-full bg-[#1D1D1D]">{icon}</span>
+        <h4 className="section-title text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{title}</h4>
       </div>
       {children}
-    </div>
+    </section>
   )
 }
 
-function Metric({ label, value }: { label: string; value: React.ReactNode }) {
+function Metric({ label, value }: { label: string, value: React.ReactNode }) {
   return (
-    <div className="bg-muted/40 rounded-xl p-2 text-center">
+    <div className="rounded-xl bg-white/5 p-2 text-center">
       <p className="text-[10px] text-muted-foreground">{label}</p>
       <div className="text-sm font-semibold text-foreground mt-0.5">{value}</div>
     </div>

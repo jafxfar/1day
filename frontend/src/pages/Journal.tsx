@@ -49,7 +49,10 @@ export default function Journal() {
     if (newEntry) {
       setEntries(prev => [newEntry, ...(prev ?? [])])
     }
-    setTitle(''); setContent(''); setMood(7); setSelectedTags([])
+    setTitle('')
+    setContent('')
+    setMood(7)
+    setSelectedTags([])
     setShowCreate(false)
   }
 
@@ -72,118 +75,144 @@ export default function Journal() {
 
   return (
     <Layout>
-      <div className="px-4 pt-10 pb-4 space-y-5">
-
-        {/* ── Header ── */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Journal</h1>
-            <p className="text-sm text-muted-foreground">{entries.length} entries</p>
-          </div>
-          <Button size="sm" className="rounded-xl gap-1.5" onClick={() => setShowCreate(true)}>
-            <Plus className="w-4 h-4" />Write
-          </Button>
-        </div>
-
-        {/* ── Stats ── */}
-        {entries.length > 0 && (
-          <div className="grid grid-cols-3 gap-2">
-            <div className="bg-card border border-border rounded-2xl p-3 text-center">
-              <p className="text-xl font-bold text-foreground">{entries.length}</p>
-              <p className="text-[10px] text-muted-foreground">Entries</p>
+      <main className="app-page">
+        <div className="mx-auto w-full max-w-5xl px-4 pb-8 pt-8 sm:px-6 sm:pt-12">
+          <header className="app-header flex items-end justify-between gap-4">
+            <div>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.24em] text-[#D7FF35]">Private archive</p>
+              <h1 className="text-4xl font-black leading-none tracking-[-0.055em] text-foreground sm:text-5xl">Journal</h1>
+              <p className="mt-3 text-sm text-muted-foreground">
+                {entries.length} {entries.length === 1 ? 'entry' : 'entries'} collected
+              </p>
             </div>
-            <div className="bg-card border border-border rounded-2xl p-3 text-center">
-              <p className="text-xl font-bold text-foreground">{getMoodEmoji(avgMood)}</p>
-              <p className="text-[10px] text-muted-foreground">Avg Mood</p>
-            </div>
-            <div className="bg-card border border-border rounded-2xl p-3 text-center">
-              <p className="text-xl font-bold text-foreground">{allTags.length}</p>
-              <p className="text-[10px] text-muted-foreground">Tags Used</p>
-            </div>
-          </div>
-        )}
+            <Button
+              className="pressable h-12 gap-2 rounded-2xl bg-[#D7FF35] px-5 font-bold text-[#151515] hover:bg-[#D7FF35]/85"
+              onClick={() => setShowCreate(true)}
+              aria-label="Write a new journal entry"
+            >
+              <Plus className="h-5 w-5" aria-hidden="true" />
+              <span className="hidden sm:inline">Write entry</span>
+              <span className="sm:hidden">Write</span>
+            </Button>
+          </header>
 
-        {/* ── Empty state ── */}
-        {entries.length === 0 && !loading && (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <BookOpen className="w-14 h-14 text-muted-foreground mb-4" />
-            <p className="font-semibold text-foreground">Your journal is empty</p>
-            <p className="text-sm text-muted-foreground mt-1">Start capturing your thoughts</p>
-            <Button className="mt-6 rounded-xl" onClick={() => setShowCreate(true)}>Write First Entry</Button>
-          </div>
-        )}
+          {entries.length > 0 && (
+            <section className="surface-dark mt-8 grid grid-cols-3 overflow-hidden rounded-3xl" aria-label="Journal overview">
+              <div className="px-4 py-5 sm:px-6">
+                <p className="text-2xl font-black tabular-nums text-foreground sm:text-3xl">{entries.length}</p>
+                <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Entries</p>
+              </div>
+              <div className="border-x border-white/10 px-4 py-5 sm:px-6">
+                <p className="text-2xl leading-none sm:text-3xl" aria-label={`Average mood ${avgMood} out of 10`}>
+                  {getMoodEmoji(avgMood)}
+                </p>
+                <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Avg mood</p>
+              </div>
+              <div className="px-4 py-5 sm:px-6">
+                <p className="text-2xl font-black tabular-nums text-[#D7FF35] sm:text-3xl">{allTags.length}</p>
+                <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Themes</p>
+              </div>
+            </section>
+          )}
 
-        {/* ── Entries ── */}
-        <div className="space-y-3">
-          {entries.map(entry => (
-            <div key={entry.id} className="bg-card border border-border rounded-2xl p-4 space-y-3">
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex-1">
-                  <p className="text-xs text-muted-foreground">{entry.entryDate}</p>
-                  <h3 className="font-semibold text-foreground mt-0.5">{entry.title}</h3>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <div className="flex items-center gap-1">
-                    <span className="text-xl">{getMoodEmoji(entry.mood)}</span>
-                    <div className="text-right">
-                      <p className="text-[10px] text-muted-foreground">Mood</p>
-                      <p className="text-xs font-bold text-foreground">{entry.mood}/10</p>
+          {entries.length === 0 && !loading && (
+            <section className="surface-paper mt-8 flex min-h-90 flex-col items-start justify-end rounded-4xl p-7 text-[#151515] sm:p-10">
+              <BookOpen className="mb-auto h-12 w-12" strokeWidth={1.5} aria-hidden="true" />
+              <p className="max-w-sm text-3xl font-black leading-[0.95] tracking-[-0.045em]">A clear page for whatever today held.</p>
+              <p className="mt-4 max-w-xs text-sm leading-relaxed text-[#151515]/65">Capture a thought, a lesson, or the detail you do not want to lose.</p>
+              <Button className="pressable mt-7 rounded-2xl bg-[#151515] px-5 text-[#F4F4F0] hover:bg-[#292929]" onClick={() => setShowCreate(true)}>
+                Write first entry
+              </Button>
+            </section>
+          )}
+
+          <section className="mt-8 space-y-4" aria-label="Journal entries">
+            {entries.map(entry => {
+              const entryDate = new Date(`${entry.entryDate}T00:00:00`)
+              const day = entryDate.toLocaleDateString('en-US', { day: '2-digit' })
+              const month = entryDate.toLocaleDateString('en-US', { month: 'short' })
+
+              return (
+                <article key={entry.id} className="surface-paper rounded-[28px] p-5 text-[#151515] sm:p-7">
+                  <div className="flex items-start gap-4 sm:gap-6">
+                    <time className="shrink-0 border-r border-[#151515]/15 pr-4 text-center sm:pr-6" dateTime={entry.entryDate}>
+                      <span className="block text-4xl font-black leading-none tracking-[-0.06em] tabular-nums sm:text-5xl">{day}</span>
+                      <span className="mt-1 block text-[10px] font-bold uppercase tracking-[0.2em] text-[#151515]/65">{month}</span>
+                    </time>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-3">
+                        <h2 className="text-xl font-black leading-tight tracking-[-0.03em] sm:text-2xl">{entry.title}</h2>
+                        <button
+                          type="button"
+                          onClick={() => void handleDelete(entry.id)}
+                          className="icon-button pressable shrink-0 text-[#151515]/65 hover:bg-[#151515]/10 hover:text-[#9d2f25]"
+                          aria-label={`Delete journal entry ${entry.title}`}
+                        >
+                          <Trash2 className="h-4 w-4" aria-hidden="true" />
+                        </button>
+                      </div>
+                      <p className="mt-3 max-w-2xl text-sm leading-7 text-[#151515]/70 line-clamp-4">{entry.content}</p>
                     </div>
                   </div>
-                  <button
-                    onClick={() => void handleDelete(entry.id)}
-                    className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
-                    aria-label="Delete entry"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-              <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">{entry.content}</p>
-              {entry.tags.length > 0 && (
-                <div className="flex flex-wrap gap-1.5">
-                  {entry.tags.map(tag => (
-                    <Badge key={tag} variant="secondary" className="text-xs rounded-full px-2">#{tag}</Badge>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
+                  <footer className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-[#151515]/10 pt-4">
+                    <div className="flex flex-wrap gap-x-3 gap-y-1">
+                      {entry.tags.map(tag => (
+                        <Badge key={tag} variant="secondary" className="border-0 bg-transparent p-0 text-xs font-semibold text-[#151515]/65 shadow-none">
+                          #{tag}
+                        </Badge>
+                      ))}
+                    </div>
+                    <span className="ml-auto flex items-center gap-2 text-xs font-bold tabular-nums" aria-label={`Mood ${entry.mood} out of 10`}>
+                      <span className="text-lg" aria-hidden="true">{getMoodEmoji(entry.mood)}</span>
+                      {entry.mood}/10
+                    </span>
+                  </footer>
+                </article>
+              )
+            })}
+          </section>
         </div>
-      </div>
+      </main>
 
       {/* ── Create Dialog ── */}
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
-        <DialogContent className="max-w-sm rounded-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>New Entry</DialogTitle></DialogHeader>
+        <DialogContent className="surface-paper max-h-[90vh] max-w-md overflow-y-auto rounded-[28px] border-0 text-[#151515]">
+          <DialogHeader><DialogTitle className="text-2xl font-black tracking-[-0.035em]">New entry</DialogTitle></DialogHeader>
           <div className="space-y-4 pt-1">
-            <Input placeholder="Title" value={title} onChange={e => setTitle(e.target.value)} className="rounded-xl" />
+            <Input aria-label="Journal entry title" placeholder="Title" value={title} onChange={e => setTitle(e.target.value)} className="h-12 rounded-2xl border-[#151515]/15 bg-transparent" />
             <Textarea
+              aria-label="Journal entry content"
               placeholder="What's on your mind today?"
               value={content}
               onChange={e => setContent(e.target.value)}
-              className="rounded-xl min-h-[110px]"
+              className="min-h-35 rounded-2xl border-[#151515]/15 bg-transparent"
             />
             <div>
               <div className="flex items-center justify-between mb-2">
-                <p className="text-sm text-muted-foreground">Mood</p>
-                <span className="text-sm font-semibold text-foreground">{MOOD_EMOJI[mood] ?? '😊'} {mood}/10</span>
+                <p className="text-sm text-[#151515]/65">Mood</p>
+                <span className="text-sm font-bold">{MOOD_EMOJI[mood] ?? '😊'} {mood}/10</span>
               </div>
               <input
+                aria-label="Mood rating from 1 to 10"
                 type="range" min={1} max={10} value={mood}
                 onChange={e => setMood(Number(e.target.value))}
-                className="w-full accent-foreground"
+                className="w-full accent-[#151515]"
               />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground mb-2">Tags</p>
+              <p className="mb-2 text-sm text-[#151515]/65">Tags</p>
               <div className="flex flex-wrap gap-1.5">
                 {TAG_OPTIONS.map(tag => (
-                  <button key={tag} onClick={() => toggleTag(tag)}
+                  <button
+                    key={tag}
+                    type="button"
+                    onClick={() => toggleTag(tag)}
+                    aria-pressed={selectedTags.includes(tag)}
+                    aria-label={`${selectedTags.includes(tag) ? 'Remove' : 'Add'} ${tag} tag`}
                     className={`text-xs px-3 py-1.5 rounded-full border transition-all ${
                       selectedTags.includes(tag)
-                        ? 'border-primary bg-primary/10 text-foreground font-medium'
-                        : 'border-border text-muted-foreground hover:border-primary/30'
+                        ? 'border-[#151515] bg-[#151515] text-[#F4F4F0] font-medium'
+                        : 'border-[#151515]/20 text-[#151515]/65 hover:border-[#151515]/60'
                     }`}
                   >
                     #{tag}
@@ -191,8 +220,8 @@ export default function Journal() {
                 ))}
               </div>
             </div>
-            <Button className="w-full rounded-xl" onClick={() => void handleCreate()} disabled={!title.trim() || !content.trim() || creating}>
-              {creating ? 'Saving…' : 'Save Entry'}
+            <Button className="pressable h-12 w-full rounded-2xl bg-[#151515] text-[#F4F4F0] hover:bg-[#292929]" onClick={() => void handleCreate()} disabled={!title.trim() || !content.trim() || creating}>
+              {creating ? 'Saving…' : 'Save entry'}
             </Button>
           </div>
         </DialogContent>

@@ -3,7 +3,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Layout } from '../shared/ui/Layout'
 import { Button } from '../shared/ui/button'
 import { Input } from '../shared/ui/input'
-import { Send, Bot } from 'lucide-react'
+import { Bot, Send, Sparkles } from 'lucide-react'
 
 interface AIMessage {
   id: string
@@ -43,7 +43,7 @@ const INITIAL_MESSAGES: AIMessage[] = [
 
 export default function AICoach() {
   const [messages, setMessages] = useState<AIMessage[]>(INITIAL_MESSAGES)
-  const [input,    setInput]    = useState('')
+  const [input, setInput] = useState('')
   const [isTyping, setIsTyping] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
   const nextMessageId = useRef(2)
@@ -53,13 +53,13 @@ export default function AICoach() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, isTyping])
 
-  const sendMessage = async (text: string) => {
+  const handleSendMessage = async (text: string) => {
     if (!text.trim() || isTyping) return
 
     const userMsg: AIMessage = {
-      id:        String(nextMessageId.current++),
-      role:      'user',
-      content:   text.trim(),
+      id: String(nextMessageId.current++),
+      role: 'user',
+      content: text.trim(),
       timestamp: new Date().toISOString(),
     }
     setMessages(prev => [...prev, userMsg])
@@ -70,9 +70,9 @@ export default function AICoach() {
 
     const response = AI_RESPONSES[nextResponseIndex.current++ % AI_RESPONSES.length] ?? AI_RESPONSES[0]!
     const aiMsg: AIMessage = {
-      id:        String(nextMessageId.current++),
-      role:      'assistant',
-      content:   response,
+      id: String(nextMessageId.current++),
+      role: 'assistant',
+      content: response,
       timestamp: new Date().toISOString(),
     }
     setMessages(prev => [...prev, aiMsg])
@@ -81,98 +81,109 @@ export default function AICoach() {
 
   return (
     <Layout extraPb="pb-36">
-      {/* ── Sticky header ── */}
-      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b border-border px-4 py-3">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
-            <Bot className="w-5 h-5 text-primary" />
-          </div>
-          <div>
-            <p className="font-semibold text-foreground text-sm">AI Coach</p>
-            <p className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-green-500 dark:bg-green-400 inline-block" />
-              Online · Always here for you
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Context pill ── */}
-      {/* <div className="px-4 pt-3">
-        <div className="flex flex-wrap gap-3 bg-card border border-border rounded-xl px-3 py-2 text-xs text-muted-foreground">
-          <span>👤 {userName}</span>
-          <span>✅ {completedHabits}/{habits.length} habits</span>
-          {morningCheckin && <span>⚡ Energy {morningCheckin.energy}/10</span>}
-          {morningCheckin && <span>🎯 {morningCheckin.focusText}</span>}
-        </div>
-      </div> */}
-
-      {/* ── Messages ── */}
-      <div className="px-4 py-4 space-y-3">
-        {messages.map(msg => (
-          <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} gap-2`}>
-            {msg.role === 'assistant' && (
-              <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-1">
-                <Bot className="w-4 h-4 text-primary" />
-              </div>
-            )}
-            <div className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
-              msg.role === 'user'
-                ? 'bg-primary text-primary-foreground rounded-tr-sm'
-                : 'bg-card border border-border text-foreground rounded-tl-sm'
-            }`}>
-              {msg.content}
+      <main className="app-page min-h-full bg-[#141414] text-[#F4F4F0]">
+        <header className="app-header sticky top-0 z-10 bg-[#141414]/95 px-4 pb-3 pt-4 backdrop-blur sm:px-6">
+          <div className="surface-dark mx-auto flex w-full max-w-md items-center gap-3 rounded-[24px] bg-[#1D1D1D] p-3">
+            <div className="lime-panel flex size-11 items-center justify-center rounded-[16px] bg-[#D7FF35] text-[#151515]">
+              <Bot className="size-5" />
             </div>
-          </div>
-        ))}
-
-        {/* Typing indicator */}
-        {isTyping && (
-          <div className="flex gap-2 items-center">
-            <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-              <Bot className="w-4 h-4 text-primary" />
+            <div className="min-w-0 flex-1">
+              <h1 className="text-sm font-bold">AI coach</h1>
+              <p className="flex items-center gap-1.5 text-xs text-[#92928D]">
+                <span className="size-1.5 rounded-full bg-[#D7FF35]" />
+                Ready to think with you
+              </p>
             </div>
-            <div className="bg-card border border-border rounded-2xl rounded-tl-sm px-4 py-3">
-              <div className="flex gap-1 items-center">
-                {[0, 1, 2].map(i => (
-                  <div key={i} className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce"
-                    style={{ animationDelay: `${i * 0.15}s` }} />
-                ))}
+            <Sparkles className="mr-1 size-4 text-[#D7FF35]" />
+          </div>
+        </header>
+
+        <section aria-label="Conversation" className="mx-auto w-full max-w-md space-y-4 px-4 pb-5 pt-3 sm:px-6">
+          {messages.map(message => (
+            <div key={message.id} className={`flex gap-2 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+              {message.role === 'assistant' && (
+                <div className="mt-1 flex size-8 shrink-0 items-center justify-center rounded-[14px] bg-[#D7FF35] text-[#151515]">
+                  <Bot className="size-4" />
+                </div>
+              )}
+              <div className={`max-w-[82%] px-4 py-3 text-sm leading-6 ${
+                message.role === 'user'
+                  ? 'lime-panel rounded-[20px] rounded-br-md bg-[#D7FF35] font-medium text-[#151515]'
+                  : 'surface-paper rounded-[20px] rounded-bl-md bg-[#F4F4F0] text-[#151515]'
+              }`}>
+                {message.content}
+                <span className="sr-only">
+                  Sent at {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </span>
               </div>
             </div>
-          </div>
-        )}
-        <div ref={bottomRef} />
-      </div>
+          ))}
 
-      {/* ── Fixed input bar ── */}
-      <div className="fixed bottom-[68px] left-0 right-0 z-30 flex justify-center px-4">
-        <div className="w-full max-w-md">
-          {messages.length <= 1 && (
-            <div className="flex gap-2 overflow-x-auto pb-2">
-              {QUICK_PROMPTS.map(prompt => (
-                <button key={prompt} onClick={() => void sendMessage(prompt)}
-                  className="shrink-0 text-xs px-3 py-1.5 rounded-full bg-card border border-border text-muted-foreground hover:text-foreground hover:border-primary/40 transition-all whitespace-nowrap">
-                  {prompt}
-                </button>
-              ))}
+          {isTyping && (
+            <div className="flex items-center gap-2" role="status" aria-label="AI coach is typing">
+              <div className="flex size-8 shrink-0 items-center justify-center rounded-[14px] bg-[#D7FF35] text-[#151515]">
+                <Bot className="size-4" />
+              </div>
+              <div className="surface-paper rounded-[20px] rounded-bl-md bg-[#F4F4F0] px-4 py-3.5">
+                <div className="flex items-center gap-1">
+                  {[0, 1, 2].map(index => (
+                    <span
+                      key={index}
+                      className="size-1.5 animate-bounce rounded-full bg-[#92928D]"
+                      style={{ animationDelay: `${index * 0.15}s` }}
+                    />
+                  ))}
+                </div>
+              </div>
             </div>
           )}
-          <div className="flex gap-2 bg-card border border-border rounded-2xl p-2 shadow-app-md">
-            <Input
-              value={input}
-              onChange={e => setInput(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void sendMessage(input) } }}
-              placeholder="Ask your AI coach..."
-              className="border-0 bg-transparent focus-visible:ring-0 text-sm px-2"
-            />
-            <Button size="sm" className="rounded-xl shrink-0 px-3"
-              onClick={() => void sendMessage(input)} disabled={!input.trim() || isTyping}>
-              <Send className="w-4 h-4" />
-            </Button>
+          <div ref={bottomRef} />
+        </section>
+
+        <div className="fixed inset-x-0 bottom-[calc(5.75rem+env(safe-area-inset-bottom))] z-30 bg-[#141414]/95 px-4 pb-3 pt-2 backdrop-blur sm:px-6">
+          <div className="mx-auto w-full max-w-md">
+            {messages.length <= 1 && (
+              <div className="mb-2 flex gap-2 overflow-x-auto pb-1">
+                {QUICK_PROMPTS.map(prompt => (
+                  <button
+                    key={prompt}
+                    type="button"
+                    onClick={() => void handleSendMessage(prompt)}
+                    className="pressable shrink-0 whitespace-nowrap rounded-[14px] border border-white/10 bg-[#1D1D1D] px-3 py-2 text-xs font-semibold text-[#92928D] transition hover:text-white active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D7FF35]"
+                  >
+                    {prompt}
+                  </button>
+                ))}
+              </div>
+            )}
+            <div className="surface-paper flex items-center gap-2 rounded-[22px] bg-[#F4F4F0] p-2 text-[#151515]">
+              <Input
+                value={input}
+                onChange={event => setInput(event.target.value)}
+                onKeyDown={event => {
+                  if (event.key === 'Enter' && !event.shiftKey) {
+                    event.preventDefault()
+                    void handleSendMessage(input)
+                  }
+                }}
+                aria-label="Message your AI coach"
+                placeholder="What’s on your mind?"
+                className="h-11 border-0 bg-transparent px-3 text-sm text-[#151515] placeholder:text-[#92928D] focus-visible:ring-0"
+              />
+              <Button
+                type="button"
+                size="icon"
+                aria-label="Send message"
+                className="icon-button pressable size-11 shrink-0 rounded-[16px] bg-[#1D1D1D] text-[#D7FF35] hover:bg-[#292929] active:scale-95 focus-visible:ring-[#151515]/30"
+                onClick={() => void handleSendMessage(input)}
+                disabled={!input.trim() || isTyping}
+              >
+                <Send className="size-4" />
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
+      </main>
     </Layout>
   )
 }

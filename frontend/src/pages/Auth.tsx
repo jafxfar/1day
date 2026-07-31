@@ -4,7 +4,7 @@ import { useSession } from '../entities/auth/model/useSession'
 import { Layout } from '../shared/ui/Layout'
 import { Button } from '../shared/ui/button'
 import { Input } from '../shared/ui/input'
-import { Sparkles, Loader2 } from 'lucide-react'
+import { ArrowLeft, Loader2, Sparkles } from 'lucide-react'
 
 export default function Auth() {
   const navigate = useNavigate()
@@ -46,138 +46,168 @@ export default function Auth() {
 
   return (
     <Layout hideNav={true}>
-      <div className="flex flex-col justify-center min-h-[80vh] px-4 py-6 space-y-6">
-        {/* Card wrapper */}
-        <div className="bg-card border border-border rounded-2xl p-6 shadow-app-md space-y-6">
-          {/* Header */}
-          <div className="flex flex-col items-center text-center gap-2">
-            <div className="w-10 h-10 rounded-3xl bg-primary flex items-center justify-center shadow-app-sm">
-              <Sparkles className="w-5 h-5 text-primary-foreground" />
-            </div>
-            <h1 className="text-2xl font-bold text-foreground">Life OS</h1>
-            <p className="text-sm text-muted-foreground">
-              {isLogin ? 'Log in to your dashboard' : 'Create your account to get started'}
-            </p>
-          </div>
-
-          {/* Tab switcher */}
-          <div className="flex p-1 bg-muted rounded-xl border border-border">
+      <main className="app-page min-h-dvh bg-[#141414] px-4 py-4 text-[#F4F4F0] sm:px-6 sm:py-6">
+        <div className="surface-dark mx-auto flex min-h-[calc(100dvh-2rem)] w-full max-w-md flex-col rounded-[32px] bg-[#1D1D1D] p-5 sm:min-h-[calc(100dvh-3rem)] sm:p-7">
+          <header className="app-header flex items-center justify-between">
             <button
               type="button"
-              className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${
-                isLogin
-                  ? 'bg-background text-foreground shadow-xs'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-              onClick={() => {
-                setIsLogin(true)
-                setError(null)
-              }}
+              aria-label="Back to welcome"
+              onClick={() => navigate('/welcome')}
+              className="icon-button pressable flex size-11 items-center justify-center rounded-[16px] border border-white/10 text-[#F4F4F0] transition hover:bg-white/5 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D7FF35]"
             >
-              Log In
+              <ArrowLeft className="size-5" />
             </button>
-            <button
-              type="button"
-              className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${
-                !isLogin
-                  ? 'bg-background text-foreground shadow-xs'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-              onClick={() => {
-                setIsLogin(false)
-                setError(null)
-              }}
-            >
-              Sign Up
-            </button>
-          </div>
-
-          {/* Error message */}
-          {error && (
-            <div className="p-3 bg-destructive/10 border border-destructive/20 text-destructive text-sm rounded-xl font-medium">
-              {error}
+            <div className="flex items-center gap-2">
+              <Sparkles className="size-4 text-[#D7FF35]" />
+              <span className="text-sm font-semibold">Life OS</span>
             </div>
-          )}
+          </header>
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {!isLogin && (
-              <div className="grid grid-cols-2 gap-2">
+          <div className="flex flex-1 flex-col justify-center py-10">
+            <div className="mb-8">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-[#D7FF35]">
+                {isLogin ? 'Welcome back' : 'Build your system'}
+              </p>
+              <h1 className="text-balance text-5xl font-black leading-[0.95] tracking-[-0.055em]">
+                {isLogin ? 'Pick up where you left off.' : 'Start with one intentional day.'}
+              </h1>
+              <p className="mt-4 max-w-sm text-sm leading-6 text-[#92928D]">
+                {isLogin
+                  ? 'Your goals, habits, and daily focus are waiting.'
+                  : 'Create an account to keep your progress in one calm place.'}
+              </p>
+            </div>
+
+            <div className="surface-paper rounded-[28px] bg-[#F4F4F0] p-4 text-[#151515] sm:p-5">
+              <div className="mb-5 grid grid-cols-2 rounded-[16px] bg-[#92928D] p-1" role="tablist" aria-label="Authentication mode">
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={isLogin}
+                  className={`pressable rounded-[13px] py-2.5 text-sm font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#151515] ${
+                    isLogin ? 'bg-[#1D1D1D] text-[#F4F4F0]' : 'text-[#151515] hover:text-[#151515]'
+                  }`}
+                  onClick={() => {
+                    setIsLogin(true)
+                    setError(null)
+                  }}
+                >
+                  Log in
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={!isLogin}
+                  className={`pressable rounded-[13px] py-2.5 text-sm font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#151515] ${
+                    !isLogin ? 'bg-[#1D1D1D] text-[#F4F4F0]' : 'text-[#151515] hover:text-[#151515]'
+                  }`}
+                  onClick={() => {
+                    setIsLogin(false)
+                    setError(null)
+                  }}
+                >
+                  Sign up
+                </button>
+              </div>
+
+              {error && (
+                <div role="alert" className="mb-4 rounded-[14px] border border-red-800/20 bg-red-100 p-3 text-sm font-medium text-red-800">
+                  {error}
+                </div>
+              )}
+
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {!isLogin && (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-[#92928D]" htmlFor="firstName">
+                        First name
+                      </label>
+                      <Input
+                        id="firstName"
+                        type="text"
+                        autoComplete="given-name"
+                        placeholder="Alex"
+                        value={firstName}
+                        onChange={e => setFirstName(e.target.value)}
+                        disabled={loading}
+                        className="h-12 rounded-[16px] border-[#151515]/15 bg-[#F4F4F0] px-4 text-[#151515] placeholder:text-[#92928D] focus-visible:border-[#151515] focus-visible:ring-[#151515]/20"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-[#92928D]" htmlFor="lastName">
+                        Last name
+                      </label>
+                      <Input
+                        id="lastName"
+                        type="text"
+                        autoComplete="family-name"
+                        placeholder="Morgan"
+                        value={lastName}
+                        onChange={e => setLastName(e.target.value)}
+                        disabled={loading}
+                        className="h-12 rounded-[16px] border-[#151515]/15 bg-[#F4F4F0] px-4 text-[#151515] placeholder:text-[#92928D] focus-visible:border-[#151515] focus-visible:ring-[#151515]/20"
+                      />
+                    </div>
+                  </div>
+                )}
+
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-muted-foreground" htmlFor="firstName">
-                    First Name
+                  <label className="text-xs font-bold text-[#92928D]" htmlFor="email">
+                    Email address
                   </label>
                   <Input
-                    id="firstName"
-                    type="text"
-                    placeholder="John"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
+                    id="email"
+                    type="email"
+                    autoComplete="email"
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
                     disabled={loading}
+                    className="h-12 rounded-[16px] border-[#151515]/15 bg-[#F4F4F0] px-4 text-[#151515] placeholder:text-[#92928D] focus-visible:border-[#151515] focus-visible:ring-[#151515]/20"
                     required
                   />
                 </div>
+
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-muted-foreground" htmlFor="lastName">
-                    Last Name
+                  <label className="text-xs font-bold text-[#92928D]" htmlFor="password">
+                    Password
                   </label>
                   <Input
-                    id="lastName"
-                    type="text"
-                    placeholder="Doe"
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
+                    id="password"
+                    type="password"
+                    autoComplete={isLogin ? 'current-password' : 'new-password'}
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
                     disabled={loading}
+                    className="h-12 rounded-[16px] border-[#151515]/15 bg-[#F4F4F0] px-4 text-[#151515] placeholder:text-[#92928D] focus-visible:border-[#151515] focus-visible:ring-[#151515]/20"
+                    required
                   />
                 </div>
-              </div>
-            )}
 
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-muted-foreground" htmlFor="email">
-                Email Address
-              </label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="name@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={loading}
-                required
-              />
+                <Button
+                  type="submit"
+                  className="pressable mt-2 h-14 w-full rounded-[18px] bg-[#D7FF35] text-base font-bold text-[#151515] hover:bg-[#D7FF35]/90 active:scale-[0.985] focus-visible:ring-[#151515]/30"
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="size-4 animate-spin" />
+                      Please wait
+                    </>
+                  ) : isLogin ? (
+                    'Log in'
+                  ) : (
+                    'Create account'
+                  )}
+                </Button>
+              </form>
             </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-muted-foreground" htmlFor="password">
-                Password
-              </label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={loading}
-                required
-              />
-            </div>
-
-            <Button type="submit" className="w-full h-10 mt-2 font-semibold" disabled={loading}>
-              {loading ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                  Please wait...
-                </>
-              ) : isLogin ? (
-                'Log In'
-              ) : (
-                'Create Account'
-              )}
-            </Button>
-          </form>
+          </div>
         </div>
-      </div>
+      </main>
     </Layout>
   )
 }

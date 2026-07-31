@@ -78,27 +78,33 @@ export default function Dashboard() {
 
   return (
     <Layout>
-      <div className="px-4 pt-10 pb-4 space-y-4">
+      <main className="app-page space-y-7 px-4 pb-6 pt-8">
 
         {/* ── Header ── */}
-        <div className="flex items-start justify-between">
+        <header className="app-header flex items-start justify-between gap-4">
           <div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs font-medium tracking-wide text-muted-foreground">
               {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
             </p>
-            <h1 className="text-2xl font-bold text-foreground mt-0.5">{getGreeting()}, {userName}</h1>
+            <h1 className="mt-1 max-w-[16rem] text-3xl font-bold leading-[0.95] tracking-[-0.04em] text-foreground">
+              {getGreeting()}, {userName}
+            </h1>
           </div>
-          <button className="relative p-2.5 bg-card rounded-xl border border-border hover:bg-accent transition-colors" onClick={() => navigate('/profile')}>
+          <button
+            className="icon-button pressable relative grid size-11 shrink-0 place-items-center rounded-2xl bg-card text-muted-foreground transition-colors hover:text-foreground"
+            onClick={() => navigate('/profile')}
+            aria-label="Open profile and notifications"
+          >
             <Bell className="w-5 h-5 text-muted-foreground" />
             <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-primary rounded-full" />
           </button>
-        </div>
+        </header>
 
         {/* ── Morning CTA ── */}
         {!hasCompletedMorning && !isLoadingCheckins && (
           <button
             onClick={() => navigate('/morning')}
-            className="w-full flex items-center justify-between bg-primary text-primary-foreground rounded-2xl px-4 py-3.5 hover:opacity-90 transition-opacity"
+            className="lime-panel pressable flex w-full items-center justify-between rounded-[24px] bg-primary px-5 py-4 text-primary-foreground transition-transform active:scale-[0.98]"
           >
             <div className="flex items-center gap-3">
               <Sun className="w-5 h-5" />
@@ -114,58 +120,58 @@ export default function Dashboard() {
         {/* ── Morning Stats (after checkin) ── */}
         {hasCompletedMorning && morningCheckin && (
           <>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-[1.2fr_0.8fr] gap-2">
               {[
                 { icon: Moon, label: 'Sleep', value: `${morningCheckin.sleepHours}h` },
                 { icon: Zap, label: 'Energy', value: `${morningCheckin.energy}/10` },
                 { icon: Sun, label: 'Mood', value: getMoodIcon(morningCheckin.mood) },
               ].map(({ icon: Icon, label, value }) => (
-                <div key={label} className="bg-card border border-border rounded-2xl p-3 text-center">
+                <div key={label} className="surface-dark rounded-[24px] bg-card p-4 text-left last:col-span-2">
                   <Icon className="w-4 h-4 text-muted-foreground mx-auto mb-1" />
-                  <div className="text-xl font-bold text-foreground leading-none flex items-center justify-center min-h-[1.5rem]">{value}</div>
+                  <div className="flex min-h-[1.5rem] items-center justify-center text-2xl font-bold leading-none tracking-tight text-foreground">{value}</div>
                   <p className="text-[10px] text-muted-foreground mt-1">{label}</p>
                 </div>
               ))}
             </div>
-            <div className="bg-card border border-border rounded-2xl px-4 py-3">
+            <div className="surface-paper rounded-[24px] bg-foreground px-5 py-4 text-background">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1 flex items-center gap-1">
-                Today's Focus <Target className="w-3.5 h-3.5 text-primary" />
+                Today's focus <Target className="w-3.5 h-3.5 text-primary" />
               </p>
-              <p className="font-semibold text-foreground text-sm">{morningCheckin.focusText}</p>
+              <p className="text-base font-semibold leading-snug text-background">{morningCheckin.focusText}</p>
             </div>
           </>
         )}
 
         {/* ── Stats cards ── */}
-        <div className="grid grid-cols-2 gap-2">
+        <section className="grid grid-cols-[1.15fr_0.85fr] gap-2" aria-label="Daily overview">
           <button onClick={() => navigate('/habits')}
-            className="bg-card border border-border rounded-2xl p-4 text-left hover:border-primary/40 transition-colors">
-            <p className="text-xs text-muted-foreground">Habits Today</p>
-            <p className="text-3xl font-bold text-foreground mt-1">
+            className="lime-panel pressable min-h-36 rounded-[28px] bg-primary p-5 text-left text-primary-foreground transition-transform active:scale-[0.98]">
+            <p className="text-xs font-semibold">Habits today</p>
+            <p className="mt-5 text-4xl font-bold tracking-[-0.05em]">
               {completedHabits}<span className="text-base text-muted-foreground font-normal">/{habits.length}</span>
             </p>
             <Progress value={habits.length ? (completedHabits / habits.length) * 100 : 0} className="mt-2 h-1.5" />
           </button>
           <button onClick={() => navigate('/goals')}
-            className="bg-card border border-border rounded-2xl p-4 text-left hover:border-primary/40 transition-colors">
-            <p className="text-xs text-muted-foreground">Goals Avg.</p>
-            <p className="text-3xl font-bold text-foreground mt-1">
+            className="surface-dark pressable self-end rounded-[24px] bg-card p-5 text-left transition-transform active:scale-[0.98]">
+            <p className="text-xs text-muted-foreground">Goals average</p>
+            <p className="mt-3 text-3xl font-bold tracking-[-0.04em] text-foreground">
               {avgGoalProgress}<span className="text-base text-muted-foreground font-normal">%</span>
             </p>
             <Progress value={avgGoalProgress} className="mt-2 h-1.5" />
           </button>
-        </div>
+        </section>
 
         {/* ── AI Insight ── */}
         <button onClick={() => navigate('/ai')}
-          className="w-full bg-card border border-border rounded-2xl p-4 text-left hover:border-primary/40 transition-colors">
+          className="surface-dark pressable w-full rounded-[28px] bg-card p-5 text-left transition-transform active:scale-[0.99]">
           <div className="flex items-start gap-3">
             <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
               <Bot className="w-5 h-5 text-primary" />
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">AI Coach</span>
+                <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">AI coach</span>
                 <ChevronRight className="w-4 h-4 text-muted-foreground" />
               </div>
               <p className="text-sm text-foreground leading-relaxed">
@@ -181,18 +187,18 @@ export default function Dashboard() {
         {goals.length > 0 && (
           <div>
             <div className="flex items-center justify-between mb-3">
-              <h2 className="font-semibold text-foreground">Active Goals</h2>
+              <h2 className="section-title text-lg font-semibold tracking-tight text-foreground">Active goals</h2>
               <button onClick={() => navigate('/goals')} className="text-xs text-muted-foreground hover:text-foreground transition-colors">See all →</button>
             </div>
             <div className="space-y-2">
               {goals.slice(0, 2).map(goal => (
-                <div key={goal.id} className="bg-card border border-border rounded-2xl p-4">
+                <div key={goal.id} className="surface-paper rounded-[20px] bg-foreground p-4 text-background">
                   <div className="flex items-center justify-between mb-2">
-                    <p className="font-medium text-sm text-foreground">{goal.title}</p>
+                    <p className="text-sm font-semibold text-background">{goal.title}</p>
                     <Badge variant="secondary" className="text-xs">{goal.progress}%</Badge>
                   </div>
                   <Progress value={goal.progress} className="h-1.5" />
-                  {goal.deadline && <p className="text-xs text-muted-foreground mt-1.5">Due {goal.deadline}</p>}
+                  {goal.deadline && <p className="mt-1.5 text-xs text-background/60">Due {goal.deadline}</p>}
                 </div>
               ))}
             </div>
@@ -203,17 +209,17 @@ export default function Dashboard() {
         {habits.length > 0 && (
           <div>
             <div className="flex items-center justify-between mb-3">
-              <h2 className="font-semibold text-foreground">Today's Habits</h2>
+              <h2 className="section-title text-lg font-semibold tracking-tight text-foreground">Today's habits</h2>
               <button onClick={() => navigate('/habits')} className="text-xs text-muted-foreground hover:text-foreground transition-colors">See all →</button>
             </div>
             <div className="space-y-2">
               {habits.slice(0, 4).map(habit => {
                 return (
-                  <div key={habit.id} className="flex items-center gap-3 bg-card border border-border rounded-2xl px-4 py-3">
+                  <div key={habit.id} className="surface-paper flex items-center gap-3 rounded-[18px] bg-foreground px-4 py-3 text-background">
                     <span className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
                       {getHabitIcon(habit.icon, 'w-4 h-4 text-primary')}
                     </span>
-                    <p className={`flex-1 text-sm font-medium ${habit.completedToday ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
+                    <p className={`flex-1 text-sm font-semibold ${habit.completedToday ? 'line-through text-background/45' : 'text-background'}`}>
                       {habit.title}
                     </p>
                     <span className="flex items-center gap-0.5 text-xs text-muted-foreground">
@@ -222,10 +228,11 @@ export default function Dashboard() {
                     </span>
                     <button
                       onClick={() => void handleToggle(habit.id)}
-                      className={`w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all shrink-0 ${habit.completedToday
-                        ? 'border-green-500 bg-green-500 dark:border-green-400 dark:bg-green-400'
-                        : 'border-border hover:border-primary/50'
+                      className={`pressable flex size-8 shrink-0 items-center justify-center rounded-full border-2 transition-all ${habit.completedToday
+                        ? 'border-primary bg-primary'
+                        : 'border-background/20 hover:border-primary'
                         }`}
+                      aria-label={`${habit.completedToday ? 'Mark incomplete' : 'Mark complete'}: ${habit.title}`}
                     >
                       {habit.completedToday && <span className="text-white text-xs font-bold leading-none">✓</span>}
                     </button>
@@ -240,11 +247,11 @@ export default function Dashboard() {
         {latestEntry && (
           <div>
             <div className="flex items-center justify-between mb-3">
-              <h2 className="font-semibold text-foreground">Latest Entry</h2>
+              <h2 className="section-title text-lg font-semibold tracking-tight text-foreground">Latest entry</h2>
               <button onClick={() => navigate('/journal')} className="text-xs text-muted-foreground hover:text-foreground transition-colors">Journal →</button>
             </div>
             <button onClick={() => navigate('/journal')}
-              className="w-full bg-card border border-border rounded-2xl p-4 text-left hover:border-primary/40 transition-colors">
+              className="surface-dark pressable w-full rounded-[24px] bg-card p-5 text-left transition-transform active:scale-[0.99]">
               <div className="flex items-center gap-2 mb-1">
                 <p className="text-xs text-muted-foreground">{latestEntry.entryDate}</p>
                 <Badge variant="secondary" className="text-xs">Mood {latestEntry.mood}/10</Badge>
@@ -256,9 +263,9 @@ export default function Dashboard() {
         )}
 
         {/* ── Quick Actions ── */}
-        <div className="grid grid-cols-2 gap-2">
+        <section className="grid grid-cols-[0.9fr_1.1fr] gap-2" aria-label="Quick actions">
           <button onClick={() => navigate('/calendar')}
-            className="bg-card border border-border rounded-2xl px-4 py-3 text-left hover:border-primary/40 transition-colors flex flex-col justify-between h-24">
+            className="surface-dark pressable flex h-28 flex-col justify-between rounded-[24px] bg-card px-4 py-4 text-left transition-transform active:scale-[0.98]">
             <Calendar className="w-5 h-5 text-muted-foreground" />
             <div>
               <p className="text-sm font-medium text-foreground mt-1">Calendar</p>
@@ -266,13 +273,13 @@ export default function Dashboard() {
             </div>
           </button>
           <button onClick={() => navigate('/evening')}
-            className="bg-card border border-border rounded-2xl px-4 py-3 text-left hover:border-primary/40 transition-colors">
-            <Moon className="w-5 h-5 text-muted-foreground" />
-            <p className="text-sm font-medium text-foreground mt-1">Evening</p>
-            <p className="text-xs text-muted-foreground">Close your day</p>
+            className="surface-paper pressable rounded-[28px] bg-foreground px-5 py-4 text-left text-background transition-transform active:scale-[0.98]">
+            <Moon className="h-5 w-5 text-background/60" />
+            <p className="mt-3 text-sm font-semibold text-background">Evening</p>
+            <p className="text-xs text-background/60">Close your day</p>
           </button>
-        </div>
-      </div>
+        </section>
+      </main>
     </Layout>
   )
 }

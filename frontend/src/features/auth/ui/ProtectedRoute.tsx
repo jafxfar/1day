@@ -1,17 +1,14 @@
 import type { ReactNode } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import { useSession } from '../../../entities/auth/model/useSession'
+import { PageSkeleton } from '../../../shared/ui/PageSkeleton'
 
 export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   const { user, isLoading } = useSession()
   const location = useLocation()
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-primary"></div>
-      </div>
-    )
+    return <PageSkeleton rows={4} />
   }
 
   if (!user) {

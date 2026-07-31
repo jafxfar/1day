@@ -18,19 +18,19 @@ type CatConfig = { label: string; color: string; bg: string }
 type PeriodConf = { label: string; icon: LucideIcon; color: string; bg: string; childLabel: string | null; childType: PeriodType | null }
 
 const CAT_CONFIG: Record<GoalCategory, CatConfig> = {
-  health: { label: 'Health', color: 'text-green-700 dark:text-green-300', bg: 'bg-green-50 dark:bg-green-950/40' },
-  career: { label: 'Career', color: 'text-blue-700 dark:text-blue-300', bg: 'bg-blue-50 dark:bg-blue-950/40' },
-  learning: { label: 'Learning', color: 'text-purple-700 dark:text-purple-300', bg: 'bg-purple-50 dark:bg-purple-950/40' },
-  relationships: { label: 'Relationships', color: 'text-pink-700 dark:text-pink-300', bg: 'bg-pink-50 dark:bg-pink-950/40' },
-  finance: { label: 'Finance', color: 'text-yellow-700 dark:text-yellow-300', bg: 'bg-yellow-50 dark:bg-yellow-950/40' },
-  personal: { label: 'Personal', color: 'text-orange-700 dark:text-orange-300', bg: 'bg-orange-50 dark:bg-orange-950/40' },
+  health: { label: 'Health', color: 'text-foreground', bg: 'bg-muted' },
+  career: { label: 'Career', color: 'text-foreground', bg: 'bg-muted' },
+  learning: { label: 'Learning', color: 'text-foreground', bg: 'bg-muted' },
+  relationships: { label: 'Relationships', color: 'text-foreground', bg: 'bg-muted' },
+  finance: { label: 'Finance', color: 'text-foreground', bg: 'bg-muted' },
+  personal: { label: 'Personal', color: 'text-foreground', bg: 'bg-muted' },
 }
 
 const PERIOD_CONFIG: Record<PeriodType, PeriodConf> = {
-  long_term: { label: 'Long-term', icon: Target, color: 'text-violet-700 dark:text-violet-300', bg: 'bg-violet-50 dark:bg-violet-950/40', childLabel: 'Monthly goal', childType: 'monthly' },
-  monthly: { label: 'Monthly', icon: Calendar, color: 'text-blue-700 dark:text-blue-300', bg: 'bg-blue-50 dark:bg-blue-950/40', childLabel: 'Weekly goal', childType: 'weekly' },
-  weekly: { label: 'Weekly', icon: ClipboardList, color: 'text-green-700 dark:text-green-300', bg: 'bg-green-50 dark:bg-green-950/40', childLabel: 'Daily goal', childType: 'daily' },
-  daily: { label: 'Daily', icon: Zap, color: 'text-orange-700 dark:text-orange-300', bg: 'bg-orange-50 dark:bg-orange-950/40', childLabel: null, childType: null },
+  long_term: { label: 'Long-term', icon: Target, color: 'text-primary', bg: 'bg-primary/10', childLabel: 'Monthly goal', childType: 'monthly' },
+  monthly: { label: 'Monthly', icon: Calendar, color: 'text-primary', bg: 'bg-primary/10', childLabel: 'Weekly goal', childType: 'weekly' },
+  weekly: { label: 'Weekly', icon: ClipboardList, color: 'text-primary', bg: 'bg-primary/10', childLabel: 'Daily goal', childType: 'daily' },
+  daily: { label: 'Daily', icon: Zap, color: 'text-primary', bg: 'bg-primary/10', childLabel: null, childType: null },
 }
 
 const CATEGORIES = Object.entries(CAT_CONFIG) as [GoalCategory, CatConfig][]
@@ -80,7 +80,7 @@ export default function Goals() {
   const rootCount = goals.filter(g => g.depth === 0).length
   const completedRoot = goals.filter(g => g.depth === 0 && g.isCompleted).length
 
-  const openCreateDialog = (parent: Goal | null) => {
+  const handleOpenCreateDialog = (parent: Goal | null) => {
     setParentGoal(parent)
     setTitle('')
     setDescription('')
@@ -152,45 +152,46 @@ export default function Goals() {
 
   return (
     <Layout>
-      <div className="px-2 pt-4 pb-4 space-y-5">
+      <main className="app-page space-y-7 px-4 pb-6 pt-8">
 
         {/* ── Header ── */}
-        <div className="flex items-center justify-between">
+        <header className="app-header flex items-end justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Goals</h1>
-            <p className="text-sm text-muted-foreground">{rootCount} big goals · {goals.length} total</p>
+            <p className="mb-1 text-xs font-medium tracking-wide text-muted-foreground">Long view</p>
+            <h1 className="text-4xl font-bold leading-none tracking-[-0.05em] text-foreground">Goals</h1>
+            <p className="mt-2 text-sm text-muted-foreground">{rootCount} big goals · {goals.length} total</p>
           </div>
-          <Button size="sm" className="rounded-xl gap-0.5" onClick={() => openCreateDialog(null)}>
+          <Button size="sm" className="pressable h-11 rounded-2xl px-4" onClick={() => handleOpenCreateDialog(null)}>
             <Plus className="w-4 h-4" />
-            New Goal
+            New goal
           </Button>
-        </div>
+        </header>
 
         {/* ── Overview card ── */}
         {goals.length > 0 && (
-          <div className="bg-card border border-border rounded-2xl p-4 flex items-center gap-4">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-              <TrendingUp className="w-5 h-5 text-primary" />
+          <section className="grid grid-cols-[1.2fr_0.8fr] gap-2" aria-label="Goal progress">
+            <div className="lime-panel rounded-[28px] bg-primary p-5 text-primary-foreground">
+              <TrendingUp className="h-5 w-5" />
+              <p className="mt-8 text-sm font-semibold">Overall progress</p>
+              <p className="mt-1 text-xs opacity-70">{completedRoot} of {rootCount} big goals completed</p>
             </div>
-            <div className="flex-1">
-              <p className="font-semibold text-foreground">Overall</p>
-              <p className="text-xs text-muted-foreground">{completedRoot} of {rootCount} big goals completed</p>
+            <div className="surface-paper flex min-h-36 items-end rounded-[24px] bg-foreground p-5 text-background">
+              <span className="text-4xl font-bold tracking-[-0.06em]">
+                {rootCount ? Math.round((completedRoot / rootCount) * 100) : 0}%
+              </span>
             </div>
-            <span className="text-xl font-bold text-foreground">
-              {rootCount ? Math.round((completedRoot / rootCount) * 100) : 0}%
-            </span>
-          </div>
+          </section>
         )}
 
         {/* ── Goal tree ── */}
         {tree.length === 0 && !loading && (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <Target className="w-12 h-12 text-primary/60 mb-4 animate-bounce" />
+            <Target className="mb-4 h-12 w-12 text-primary/60" />
             <p className="font-semibold text-foreground">No goals yet</p>
             <p className="text-sm text-muted-foreground mt-1 max-w-xs">
               Set a big goal (e.g. "Learn Backend in 6 months"), then break it down into monthly and weekly steps.
             </p>
-            <Button className="mt-6 rounded-xl" onClick={() => openCreateDialog(null)}>
+            <Button className="pressable mt-6 rounded-2xl" onClick={() => handleOpenCreateDialog(null)}>
               Create your first goal
             </Button>
           </div>
@@ -202,18 +203,18 @@ export default function Goals() {
               key={node.id}
               node={node}
               depth={0}
-              onAddChild={openCreateDialog}
+              onAddChild={handleOpenCreateDialog}
               onProgressChange={handleProgressUpdate}
               onToggleComplete={handleToggleComplete}
               onDelete={handleDelete}
             />
           ))}
         </div>
-      </div>
+      </main>
 
       {/* ── Create Dialog ── */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-sm rounded-2xl mx-4">
+        <DialogContent className="mx-4 max-w-sm rounded-[28px]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <dialogPeriodConf.icon className="w-5 h-5 text-primary shrink-0" />
@@ -226,7 +227,7 @@ export default function Goals() {
           </DialogHeader>
 
           {parentGoal && (
-            <div className="flex items-center gap-2 bg-muted/50 rounded-xl px-3 py-2 -mt-1">
+            <div className="-mt-1 flex items-center gap-2 rounded-2xl bg-muted/50 px-3 py-2">
               <span className="text-xs text-muted-foreground">Under:</span>
               <span className="text-xs font-medium text-foreground truncate">{parentGoal.title}</span>
             </div>
@@ -237,17 +238,17 @@ export default function Goals() {
               placeholder="Goal title"
               value={title}
               onChange={e => setTitle(e.target.value)}
-              className="rounded-xl"
+              className="rounded-2xl"
               autoFocus
             />
             <Input
               placeholder="Description (optional)"
               value={description}
               onChange={e => setDescription(e.target.value)}
-              className="rounded-xl"
+              className="rounded-2xl"
             />
             <Select value={category} onValueChange={v => setCategory(v as GoalCategory)}>
-              <SelectTrigger className="rounded-xl"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="rounded-2xl"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {CATEGORIES.map(([val, cfg]) => (
                   <SelectItem key={val} value={val}>{cfg.label}</SelectItem>
@@ -256,10 +257,10 @@ export default function Goals() {
             </Select>
             <div>
               <p className="text-xs text-muted-foreground mb-1">Deadline</p>
-              <Input type="date" value={deadline} onChange={e => setDeadline(e.target.value)} className="rounded-xl" />
+              <Input type="date" value={deadline} onChange={e => setDeadline(e.target.value)} className="rounded-2xl" />
             </div>
             <Button
-              className="w-full rounded-xl"
+              className="pressable w-full rounded-2xl"
               onClick={() => void handleCreate()}
               disabled={!title.trim() || creating}
             >
@@ -294,30 +295,25 @@ function GoalCard({ node, depth, onAddChild, onProgressChange, onToggleComplete,
     ? Math.round(node.children.reduce((a, c) => a + c.progress, 0) / node.children.length)
     : null
 
+  const handleToggleExpanded = () => setExpanded(value => !value)
+
   return (
-    <div className={cn('space-y-2', depth > 0 && 'pl-4 border-l-2 border-border ml-2')}>
+    <div className={cn('space-y-2', depth > 0 && 'ml-3 border-l border-primary/30 pl-3')}>
       {/* Card */}
       <div className={cn(
-        'bg-card border border-border rounded-2xl overflow-hidden transition-all',
+        'surface-paper overflow-hidden rounded-[24px] bg-foreground text-background transition-all',
         node.isCompleted && 'opacity-70',
-        depth === 0 && 'shadow-app-sm',
+        depth > 0 && 'rounded-[18px]',
       )}>
-        {/* Top accent line by period */}
-        <div className={cn('h-0.5 w-full', {
-          'bg-violet-400': node.periodType === 'long_term',
-          'bg-blue-400': node.periodType === 'monthly',
-          'bg-green-400': node.periodType === 'weekly',
-          'bg-orange-400': node.periodType === 'daily',
-        })} />
-
         <div className="p-4 space-y-3">
           {/* Row 1: icon + title + badges + actions */}
           <div className="flex items-start gap-2">
             {/* Expand toggle if has children */}
             {node.children.length > 0 && (
               <button
-                onClick={() => setExpanded(v => !v)}
-                className="mt-0.5 p-0.5 rounded-lg hover:bg-accent text-muted-foreground shrink-0"
+                onClick={handleToggleExpanded}
+                className="pressable mt-0.5 shrink-0 rounded-lg p-0.5 text-background/55 hover:bg-background/10"
+                aria-label={`${expanded ? 'Collapse' : 'Expand'} ${node.title}`}
               >
                 {expanded
                   ? <ChevronDown className="w-4 h-4" />
@@ -329,23 +325,23 @@ function GoalCard({ node, depth, onAddChild, onProgressChange, onToggleComplete,
             <div className="flex-1 min-w-0">
               <div className="flex items-start gap-1.5 flex-wrap">
                 {/* Period badge */}
-                <span className={cn('inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full', periodCfg.bg, periodCfg.color)}>
+                <span className="inline-flex items-center gap-1 rounded-md bg-primary px-2 py-0.5 text-[10px] font-semibold text-primary-foreground">
                   <periodCfg.icon className="w-3 h-3 shrink-0" /> {periodCfg.label}
                 </span>
                 {/* Category badge */}
-                <span className={cn('inline-flex items-center text-[10px] font-medium px-2 py-0.5 rounded-full', catCfg.bg, catCfg.color)}>
+                <span className="inline-flex items-center rounded-md bg-background/10 px-2 py-0.5 text-[10px] font-medium text-background/65">
                   {catCfg.label}
                 </span>
               </div>
               <p className={cn(
-                'font-semibold text-foreground mt-1 leading-snug',
+                'mt-2 font-semibold leading-snug text-background',
                 depth === 0 ? 'text-base' : 'text-sm',
-                node.isCompleted && 'line-through text-muted-foreground',
+                node.isCompleted && 'line-through text-background/45',
               )}>
                 {node.title}
               </p>
               {node.description && (
-                <p className="text-xs text-muted-foreground mt-0.5 leading-snug">{node.description}</p>
+                <p className="mt-1 text-xs leading-snug text-background/55">{node.description}</p>
               )}
             </div>
 
@@ -356,8 +352,8 @@ function GoalCard({ node, depth, onAddChild, onProgressChange, onToggleComplete,
                 className={cn(
                   'w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all',
                   node.isCompleted
-                    ? 'border-green-500 bg-green-500 dark:border-green-400 dark:bg-green-400'
-                    : 'border-border hover:border-green-400',
+                    ? 'border-primary bg-primary'
+                    : 'border-background/20 hover:border-primary',
                 )}
                 aria-label="Toggle complete"
               >
@@ -365,7 +361,7 @@ function GoalCard({ node, depth, onAddChild, onProgressChange, onToggleComplete,
               </button>
               <button
                 onClick={() => onDelete(node.id)}
-                className="p-1 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                className="pressable rounded-lg p-1 text-background/45 transition-colors hover:bg-destructive/10 hover:text-destructive"
                 aria-label="Delete goal"
               >
                 <Trash2 className="w-3.5 h-3.5" />
@@ -377,43 +373,43 @@ function GoalCard({ node, depth, onAddChild, onProgressChange, onToggleComplete,
           {!node.isCompleted && (
             <div className="space-y-1">
               <div className="flex items-center justify-between text-xs">
-                <span className="text-muted-foreground">Progress</span>
+                <span className="text-background/55">Progress</span>
                 <div className="flex items-center gap-2">
                   {childAvgProgress !== null && (
-                    <span className="text-muted-foreground">
+                    <span className="text-background/55">
                       Sub-goals avg: {childAvgProgress}%
                     </span>
                   )}
-                  <span className="font-bold text-foreground">{node.progress}%</span>
+                  <span className="font-bold text-background">{node.progress}%</span>
                 </div>
               </div>
               <input
                 type="range" min={0} max={100} step={5}
                 value={node.progress}
                 onChange={e => onProgressChange(node.id, Number(e.target.value))}
-                className="w-full accent-foreground h-1.5"
+                className="h-1.5 w-full accent-primary"
               />
             </div>
           )}
 
           {node.isCompleted && (
-            <div className="flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400">
+            <div className="flex items-center gap-1.5 text-xs text-primary">
               <CheckCircle2 className="w-3.5 h-3.5" />
-              <span>Completed!</span>
+              <span>Completed</span>
             </div>
           )}
 
           {/* Row 3: Deadline + Add child button */}
           <div className="flex items-center justify-between">
             {node.deadline ? (
-              <span className="text-xs text-muted-foreground">Due {node.deadline}</span>
+              <span className="text-xs text-background/55">Due {node.deadline}</span>
             ) : (
               <span />
             )}
             {hasChild && (
               <button
                 onClick={() => onAddChild(node)}
-                className="flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground border border-dashed border-border hover:border-primary/40 rounded-lg px-2 py-1 transition-all"
+                className="pressable flex items-center gap-1 rounded-xl border border-dashed border-background/20 px-2 py-1 text-xs font-medium text-background/60 transition-all hover:border-primary hover:text-primary"
               >
                 <Plus className="w-3 h-3" />
                 Add {periodCfg.childLabel}
