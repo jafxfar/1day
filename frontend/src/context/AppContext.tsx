@@ -11,8 +11,7 @@ import { useCurrentUser, type CurrentUser } from '../hooks/useCurrentUser'
 import { useGetTodayCheckins } from '../hooks/backend/checkins'
 import type { MorningCheckin, EveningReflection, TodayCheckins } from '../lib/types'
 import { cast } from '../lib/types'
-
-const API_BASE = import.meta.env['VITE_API_URL'] ?? 'http://localhost:3000'
+import { authApi } from '../api/auth'
 
 interface AppContextValue {
   /** Authenticated user info */
@@ -51,24 +50,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [user])
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    try {
-      const res = await fetch(`${API_BASE}/api/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-        credentials: 'include',
-      })
-      if (res.ok) {
-        const data = await res.json()
-        setUser(data.user)
-        return true
-      } else {
-        const err = await res.json().catch(() => ({}))
-        throw new Error(err.error ?? 'Invalid credentials')
-      }
-    } catch (e) {
-      throw e
-    }
+    const { user: authenticatedUser } = await authApi.login({ email, password })
+    setUser(authenticatedUser)
+    return true
   }
 
   const register = async (
@@ -77,34 +61,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
     firstName: string,
     lastName: string,
   ): Promise<boolean> => {
-    try {
-      const res = await fetch(`${API_BASE}/api/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, firstName, lastName }),
-        credentials: 'include',
-      })
-      if (res.ok) {
-        const data = await res.json()
-        setUser(data.user)
-        return true
-      } else {
-        const err = await res.json().catch(() => ({}))
-        throw new Error(err.error ?? 'Registration failed')
-      }
-    } catch (e) {
-      throw e
-    }
+    const { user: registeredUser } = await authApi.register({
+      email,
+      password,
+      firstName,
+      lastName,
+    })
+    setUser(registeredUser)
+    return true
   }
 
   const logout = async (): Promise<void> => {
     try {
-      await fetch(`${API_BASE}/api/auth/logout`, {
-        method: 'POST',
-        credentials: 'include',
-      })
-    } catch (e) {
-      console.error('Logout error', e)
+      await authApi.logout()
+    } catch (caughtError) {
+      console.error('Logout error', caughtError)
     } finally {
       setUser(null)
     }
@@ -128,7 +99,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     isLoadingCheckins:   loadingCheckins,
     refetchCheckins: () => {
       if (user) {
-        void fetchCheckins({ skipCache: true })
+        void fetchCheckins(undefined, { skipCache: true })
       }
     },
   }

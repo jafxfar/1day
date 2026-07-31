@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useCallback } from 'react'
 import { isIframeHosted } from './iframeHostedMode'
-import { getXsrfToken, XSRF_HEADER_NAME } from './xsrfUtils'
+import { retoolRuntimeApi } from '../api/retoolRuntime'
 
 type AuthResource = {
   name: string
@@ -65,13 +65,16 @@ export function RetoolAuthProvider({ children }: { children: React.ReactNode }) 
       // so the cross-origin form submission is permitted.
       void (async () => {
         try {
-          const response = await fetch('/_/api/oauth/resource', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', [XSRF_HEADER_NAME]: getXsrfToken() },
-            body: JSON.stringify({ resourceName, redirectUri: window.location.href.split('#')[0] }),
+          const {
+            oauthAuthorizeUrl,
+            authorizationToken,
+            resourceId,
+            environment,
+            redirectUri,
+          } = await retoolRuntimeApi.requestOAuthResource({
+            resourceName,
+            redirectUri: window.location.href.split('#')[0],
           })
-          if (!response.ok) return
-          const { oauthAuthorizeUrl, authorizationToken, resourceId, environment, redirectUri } = await response.json()
           const form = document.createElement('form')
           form.method = 'POST'
           form.action = oauthAuthorizeUrl

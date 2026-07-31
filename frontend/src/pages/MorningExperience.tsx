@@ -6,15 +6,15 @@ import { Input } from '../components/ui/input'
 import { Slider } from '../components/ui/slider'
 import { useApp } from '../context/AppContext'
 import { useSaveMorningCheckin } from '../hooks/backend/checkins'
-import { ChevronLeft, Moon } from 'lucide-react'
+import { ChevronLeft, Moon, Sun, BatteryCharging, MessageSquare, Target, CheckCircle2, Smile, AlertTriangle, Frown, Meh, Zap, Laugh } from 'lucide-react'
 
 const SLEEP_OPTIONS = [4, 5, 6, 7, 8, 9, 10] as const
 const MOODS = [
-  { value: 1, emoji: '😞', label: 'Terrible' },
-  { value: 2, emoji: '😕', label: 'Bad' },
-  { value: 3, emoji: '😐', label: 'Okay' },
-  { value: 4, emoji: '🙂', label: 'Good' },
-  { value: 5, emoji: '😄', label: 'Amazing' },
+  { value: 1, icon: Frown, label: 'Terrible', color: 'text-red-500' },
+  { value: 2, icon: Frown, label: 'Bad', color: 'text-orange-400' },
+  { value: 3, icon: Meh, label: 'Okay', color: 'text-amber-500' },
+  { value: 4, icon: Smile, label: 'Good', color: 'text-green-400' },
+  { value: 5, icon: Laugh, label: 'Amazing', color: 'text-green-500' },
 ]
 const FOCUS_SUGGESTIONS = [
   'Deep work on my main project',
@@ -24,10 +24,10 @@ const FOCUS_SUGGESTIONS = [
   'Learn something new',
 ]
 const STEPS = [
-  { title: 'Good morning! ☀️',  subtitle: 'How did you sleep last night?' },
-  { title: 'Energy check 🔋',    subtitle: 'Rate your current energy level' },
-  { title: "Today's mood 💭",    subtitle: 'How are you feeling right now?' },
-  { title: "Today's focus 🎯",   subtitle: 'What is your one big priority?' },
+  { title: 'Good morning!', icon: Sun, subtitle: 'How did you sleep last night?' },
+  { title: 'Energy check', icon: BatteryCharging, subtitle: 'Rate your current energy level' },
+  { title: "Today's mood", icon: MessageSquare, subtitle: 'How are you feeling right now?' },
+  { title: "Today's focus", icon: Target, subtitle: 'What is your one big priority?' },
 ]
 
 export default function MorningExperience() {
@@ -35,11 +35,11 @@ export default function MorningExperience() {
   const { refetchCheckins } = useApp()
   const { trigger: saveCheckin, loading: saving } = useSaveMorningCheckin()
 
-  const [step,       setStep]   = useState(0)
-  const [sleepHours, setSleep]  = useState(7)
-  const [energy,     setEnergy] = useState([7])
-  const [mood,       setMood]   = useState(3)
-  const [focus,      setFocus]  = useState('')
+  const [step, setStep] = useState(0)
+  const [sleepHours, setSleep] = useState(7)
+  const [energy, setEnergy] = useState([7])
+  const [mood, setMood] = useState(3)
+  const [focus, setFocus] = useState('')
 
   const today = new Date().toLocaleDateString('en-US', {
     weekday: 'long', month: 'long', day: 'numeric',
@@ -50,7 +50,7 @@ export default function MorningExperience() {
 
     await saveCheckin({
       sleepHours,
-      energy:    energy[0] ?? 7,
+      energy: energy[0] ?? 7,
       mood,
       focusText: focus.trim() || 'Make progress today',
     })
@@ -75,9 +75,8 @@ export default function MorningExperience() {
           </button>
           <div className="flex gap-0.5 items-center">
             {STEPS.map((_, i) => (
-              <div key={i} className={`h-0.5 rounded-full transition-all duration-300 ${
-                i < step ? 'w-1.5 bg-primary' : i === step ? 'w-2 bg-primary' : 'w-0.5 bg-muted'
-              }`} />
+              <div key={i} className={`h-0.5 rounded-full transition-all duration-300 ${i < step ? 'w-1.5 bg-primary' : i === step ? 'w-2 bg-primary' : 'w-0.5 bg-muted'
+                }`} />
             ))}
           </div>
           <div className="w-9" />
@@ -88,7 +87,10 @@ export default function MorningExperience() {
         {/* Content */}
         <div className="flex-1 px-2 py-2">
           <div className="space-y-1 mb-4">
-            <h1 className="text-3xl font-bold text-foreground">{current.title}</h1>
+            <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
+              <span>{current.title}</span>
+              <current.icon className="w-8 h-8 text-primary shrink-0 animate-pulse" />
+            </h1>
             <p className="text-muted-foreground">{current.subtitle}</p>
           </div>
 
@@ -102,19 +104,26 @@ export default function MorningExperience() {
               <div className="grid grid-cols-4 gap-[8px]">
                 {SLEEP_OPTIONS.map(h => (
                   <button key={h} onClick={() => setSleep(h)}
-                    className={`py-1.5 rounded-2xl text-base font-bold transition-all ${
-                      sleepHours === h
+                    className={`py-1.5 rounded-2xl text-base font-bold transition-all ${sleepHours === h
                         ? 'bg-primary text-primary-foreground shadow-retool-sm scale-105'
                         : 'bg-card border border-border text-foreground hover:border-primary/40'
-                    }`}
+                      }`}
                   >
                     {h}h
                   </button>
                 ))}
               </div>
-              <p className="text-center text-sm text-muted-foreground mt-1.5 font-medium">
-                {sleepHours >= 8 ? '✅ Excellent rest!' : sleepHours >= 7 ? '👍 Good sleep' : sleepHours >= 6 ? '⚠️ A bit short' : '😴 Need more rest'}
-              </p>
+              <div className="text-center text-sm text-muted-foreground mt-1.5 font-medium">
+                {sleepHours >= 8 ? (
+                  <span className="flex items-center justify-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-green-500" /> Excellent rest!</span>
+                ) : sleepHours >= 7 ? (
+                  <span className="flex items-center justify-center gap-1.5"><Smile className="w-4 h-4 text-green-400" /> Good sleep</span>
+                ) : sleepHours >= 6 ? (
+                  <span className="flex items-center justify-center gap-1.5"><AlertTriangle className="w-4 h-4 text-amber-500 animate-pulse" /> A bit short</span>
+                ) : (
+                  <span className="flex items-center justify-center gap-1.5"><Moon className="w-4 h-4 text-blue-400" /> Need more rest</span>
+                )}
+              </div>
             </div>
           )}
 
@@ -127,8 +136,8 @@ export default function MorningExperience() {
               </div>
               <Slider value={energy} onValueChange={setEnergy} min={1} max={10} step={1} />
               <div className="flex justify-between text-xs text-muted-foreground">
-                <span>Exhausted 😴</span>
-                <span>Energized ⚡</span>
+                <span className="flex items-center gap-1">Exhausted <Frown className="w-3.5 h-3.5 text-muted-foreground" /></span>
+                <span className="flex items-center gap-1">Energized <Zap className="w-3.5 h-3.5 text-yellow-500" /></span>
               </div>
             </div>
           )}
@@ -137,27 +146,36 @@ export default function MorningExperience() {
           {step === 2 && (
             <div className="space-y-2">
               <div className="grid grid-cols-5 gap-[8px]">
-                {MOODS.map(({ value, emoji, label }) => (
+                {MOODS.map(({ value, icon: Icon, label, color }) => (
                   <button key={value} onClick={() => setMood(value)}
-                    className={`flex flex-col items-center gap-1.5 py-1 rounded-2xl border transition-all ${
-                      mood === value
+                    className={`flex flex-col items-center gap-2.5 py-3 rounded-2xl border transition-all ${mood === value
                         ? 'border-primary bg-primary/5 scale-105 shadow-retool-sm'
                         : 'border-border bg-card hover:border-primary/40'
-                    }`}
+                      }`}
                   >
-                    <span className="text-2xl">{emoji}</span>
+                    <Icon className={`w-6 h-6 ${color}`} />
                     <span className="text-[10px] text-muted-foreground leading-tight text-center">{label}</span>
                   </button>
                 ))}
               </div>
-              <div className="bg-card border border-border rounded-2xl p-1 text-center">
-                <p className="font-semibold text-foreground text-lg">
-                  {MOODS.find(m => m.value === mood)?.emoji} {MOODS.find(m => m.value === mood)?.label}
-                </p>
-                <p className="text-sm text-muted-foreground mt-1">
+              <div className="bg-card border border-border rounded-2xl p-4 text-center">
+                <div className="flex items-center justify-center gap-2 mb-1.5">
+                  {(() => {
+                    const activeMood = MOODS.find(m => m.value === mood)
+                    if (!activeMood) return null
+                    const ActiveIcon = activeMood.icon
+                    return (
+                      <>
+                        <ActiveIcon className={`w-6 h-6 ${activeMood.color}`} />
+                        <span className="font-bold text-foreground text-lg">{activeMood.label}</span>
+                      </>
+                    )
+                  })()}
+                </div>
+                <p className="text-sm text-muted-foreground">
                   {mood >= 4 ? "That's wonderful! Let's make the most of today."
                     : mood === 3 ? "That's okay. Small steps lead to big changes."
-                    : "It's alright. Be kind to yourself today."}
+                      : "It's alright. Be kind to yourself today."}
                 </p>
               </div>
             </div>
@@ -176,11 +194,10 @@ export default function MorningExperience() {
               <div className="space-y-[8px]">
                 {FOCUS_SUGGESTIONS.map(s => (
                   <button key={s} onClick={() => setFocus(s)}
-                    className={`w-full text-left p-1 rounded-xl border text-sm transition-all ${
-                      focus === s
+                    className={`w-full text-left p-1 rounded-xl border text-sm transition-all ${focus === s
                         ? 'border-primary bg-primary/5 text-foreground font-medium'
                         : 'border-border bg-card text-muted-foreground hover:text-foreground hover:border-primary/30'
-                    }`}
+                      }`}
                   >
                     {s}
                   </button>

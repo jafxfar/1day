@@ -7,30 +7,30 @@ import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
-import { Plus, Trash2, ChevronDown, ChevronRight, CheckCircle2, TrendingUp } from 'lucide-react'
+import { Plus, Trash2, ChevronDown, ChevronRight, CheckCircle2, TrendingUp, Target, Calendar, ClipboardList, Zap } from 'lucide-react'
 import type { Goal, GoalCategory, PeriodType } from '../lib/types'
 import { cast } from '../lib/types'
 import { cn } from '../lib/utils'
 
 // ─── Config ──────────────────────────────────────────────────────────────────
 
-type CatConfig  = { label: string; color: string; bg: string }
-type PeriodConf = { label: string; icon: string; color: string; bg: string; childLabel: string | null; childType: PeriodType | null }
+type CatConfig = { label: string; color: string; bg: string }
+type PeriodConf = { label: string; icon: React.ComponentType<any>; color: string; bg: string; childLabel: string | null; childType: PeriodType | null }
 
 const CAT_CONFIG: Record<GoalCategory, CatConfig> = {
-  health:        { label: 'Health',        color: 'text-green-700 dark:text-green-300',   bg: 'bg-green-50 dark:bg-green-950/40' },
-  career:        { label: 'Career',        color: 'text-blue-700 dark:text-blue-300',     bg: 'bg-blue-50 dark:bg-blue-950/40' },
-  learning:      { label: 'Learning',      color: 'text-purple-700 dark:text-purple-300', bg: 'bg-purple-50 dark:bg-purple-950/40' },
-  relationships: { label: 'Relationships', color: 'text-pink-700 dark:text-pink-300',     bg: 'bg-pink-50 dark:bg-pink-950/40' },
-  finance:       { label: 'Finance',       color: 'text-yellow-700 dark:text-yellow-300', bg: 'bg-yellow-50 dark:bg-yellow-950/40' },
-  personal:      { label: 'Personal',      color: 'text-orange-700 dark:text-orange-300', bg: 'bg-orange-50 dark:bg-orange-950/40' },
+  health: { label: 'Health', color: 'text-green-700 dark:text-green-300', bg: 'bg-green-50 dark:bg-green-950/40' },
+  career: { label: 'Career', color: 'text-blue-700 dark:text-blue-300', bg: 'bg-blue-50 dark:bg-blue-950/40' },
+  learning: { label: 'Learning', color: 'text-purple-700 dark:text-purple-300', bg: 'bg-purple-50 dark:bg-purple-950/40' },
+  relationships: { label: 'Relationships', color: 'text-pink-700 dark:text-pink-300', bg: 'bg-pink-50 dark:bg-pink-950/40' },
+  finance: { label: 'Finance', color: 'text-yellow-700 dark:text-yellow-300', bg: 'bg-yellow-50 dark:bg-yellow-950/40' },
+  personal: { label: 'Personal', color: 'text-orange-700 dark:text-orange-300', bg: 'bg-orange-50 dark:bg-orange-950/40' },
 }
 
 const PERIOD_CONFIG: Record<PeriodType, PeriodConf> = {
-  long_term: { label: 'Long-term', icon: '🎯', color: 'text-violet-700 dark:text-violet-300', bg: 'bg-violet-50 dark:bg-violet-950/40', childLabel: 'Monthly goal',  childType: 'monthly' },
-  monthly:   { label: 'Monthly',   icon: '📅', color: 'text-blue-700 dark:text-blue-300',     bg: 'bg-blue-50 dark:bg-blue-950/40',     childLabel: 'Weekly goal',   childType: 'weekly' },
-  weekly:    { label: 'Weekly',    icon: '📋', color: 'text-green-700 dark:text-green-300',   bg: 'bg-green-50 dark:bg-green-950/40',   childLabel: 'Daily goal',    childType: 'daily' },
-  daily:     { label: 'Daily',     icon: '⚡', color: 'text-orange-700 dark:text-orange-300', bg: 'bg-orange-50 dark:bg-orange-950/40', childLabel: null,            childType: null },
+  long_term: { label: 'Long-term', icon: Target, color: 'text-violet-700 dark:text-violet-300', bg: 'bg-violet-50 dark:bg-violet-950/40', childLabel: 'Monthly goal', childType: 'monthly' },
+  monthly: { label: 'Monthly', icon: Calendar, color: 'text-blue-700 dark:text-blue-300', bg: 'bg-blue-50 dark:bg-blue-950/40', childLabel: 'Weekly goal', childType: 'weekly' },
+  weekly: { label: 'Weekly', icon: ClipboardList, color: 'text-green-700 dark:text-green-300', bg: 'bg-green-50 dark:bg-green-950/40', childLabel: 'Daily goal', childType: 'daily' },
+  daily: { label: 'Daily', icon: Zap, color: 'text-orange-700 dark:text-orange-300', bg: 'bg-orange-50 dark:bg-orange-950/40', childLabel: null, childType: null },
 }
 
 const CATEGORIES = Object.entries(CAT_CONFIG) as [GoalCategory, CatConfig][]
@@ -68,19 +68,19 @@ export default function Goals() {
   const [goals, setGoals] = useState<Goal[]>([])
 
   // Dialog state
-  const [dialogOpen,     setDialogOpen]     = useState(false)
-  const [parentGoal,     setParentGoal]     = useState<Goal | null>(null)  // null = root goal
-  const [title,          setTitle]          = useState('')
-  const [description,    setDescription]    = useState('')
-  const [category,       setCategory]       = useState<GoalCategory>('personal')
-  const [deadline,       setDeadline]       = useState('')
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [parentGoal, setParentGoal] = useState<Goal | null>(null)  // null = root goal
+  const [title, setTitle] = useState('')
+  const [description, setDescription] = useState('')
+  const [category, setCategory] = useState<GoalCategory>('personal')
+  const [deadline, setDeadline] = useState('')
 
   useEffect(() => { void fetchGoals() }, [])
   useEffect(() => { setGoals(cast.goals(rawGoals)) }, [rawGoals])
 
   const tree = useMemo(() => buildTree(goals), [goals])
 
-  const rootCount     = goals.filter(g => g.depth === 0).length
+  const rootCount = goals.filter(g => g.depth === 0).length
   const completedRoot = goals.filter(g => g.depth === 0 && g.isCompleted).length
 
   const openCreateDialog = (parent: Goal | null) => {
@@ -98,12 +98,12 @@ export default function Goals() {
     const childType = parentGoal ? (PERIOD_CONFIG[parentGoal.periodType].childType ?? 'daily') : 'long_term'
 
     const newGoal = await createGoal({
-      title:       title.trim(),
+      title: title.trim(),
       description: description.trim(),
       category,
-      deadline:    deadline || null,
-      parentId:    parentGoal?.id ?? null,
-      periodType:  childType,
+      deadline: deadline || null,
+      parentId: parentGoal?.id ?? null,
+      periodType: childType,
     })
 
     if (newGoal) {
@@ -176,7 +176,7 @@ export default function Goals() {
         {/* ── Goal tree ── */}
         {tree.length === 0 && !loading && (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <span className="text-5xl mb-4">🎯</span>
+            <Target className="w-12 h-12 text-primary/60 mb-4 animate-bounce" />
             <p className="font-semibold text-foreground">No goals yet</p>
             <p className="text-sm text-muted-foreground mt-1 max-w-xs">
               Set a big goal (e.g. "Learn Backend in 6 months"), then break it down into monthly and weekly steps.
@@ -207,7 +207,7 @@ export default function Goals() {
         <DialogContent className="max-w-sm rounded-2xl mx-4">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <span>{dialogPeriodConf.icon}</span>
+              <dialogPeriodConf.icon className="w-5 h-5 text-primary shrink-0" />
               <span>
                 {parentGoal
                   ? `Add ${dialogPeriodConf.label} goal`
@@ -277,9 +277,9 @@ interface GoalCardProps {
 function GoalCard({ node, depth, onAddChild, onProgressChange, onToggleComplete, onDelete }: GoalCardProps) {
   const [expanded, setExpanded] = useState(true)
 
-  const catCfg    = CAT_CONFIG[node.category]!
+  const catCfg = CAT_CONFIG[node.category]!
   const periodCfg = PERIOD_CONFIG[node.periodType]!
-  const hasChild  = periodCfg.childType !== null
+  const hasChild = periodCfg.childType !== null
 
   const childAvgProgress = node.children.length
     ? Math.round(node.children.reduce((a, c) => a + c.progress, 0) / node.children.length)
@@ -296,8 +296,8 @@ function GoalCard({ node, depth, onAddChild, onProgressChange, onToggleComplete,
         {/* Top accent line by period */}
         <div className={cn('h-0.5 w-full', {
           'bg-violet-400': node.periodType === 'long_term',
-          'bg-blue-400':   node.periodType === 'monthly',
-          'bg-green-400':  node.periodType === 'weekly',
+          'bg-blue-400': node.periodType === 'monthly',
+          'bg-green-400': node.periodType === 'weekly',
           'bg-orange-400': node.periodType === 'daily',
         })} />
 
@@ -321,7 +321,7 @@ function GoalCard({ node, depth, onAddChild, onProgressChange, onToggleComplete,
               <div className="flex items-start gap-1.5 flex-wrap">
                 {/* Period badge */}
                 <span className={cn('inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full', periodCfg.bg, periodCfg.color)}>
-                  {periodCfg.icon} {periodCfg.label}
+                  <periodCfg.icon className="w-3 h-3 shrink-0" /> {periodCfg.label}
                 </span>
                 {/* Category badge */}
                 <span className={cn('inline-flex items-center text-[10px] font-medium px-2 py-0.5 rounded-full', catCfg.bg, catCfg.color)}>

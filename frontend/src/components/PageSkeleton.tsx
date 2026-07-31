@@ -14,11 +14,12 @@ export function PageSkeleton({ rows = 3 }: { rows?: number }) {
   )
 }
 
+import { AlertTriangle } from 'lucide-react'
 /** Full page error with retry */
 export function PageError({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center min-h-[50vh] px-4 text-center gap-4">
-      <p className="text-2xl">⚠️</p>
+      <AlertTriangle className="w-8 h-8 text-destructive animate-pulse" />
       <p className="font-semibold text-foreground">Something went wrong</p>
       <p className="text-sm text-muted-foreground max-w-xs">{message}</p>
       <button

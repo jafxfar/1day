@@ -3,8 +3,9 @@ import { useState, useEffect, useMemo } from 'react'
 import { useGetBiography } from '../hooks/backend/biography'
 import { Layout } from '../components/Layout'
 import { PageSkeleton, PageError } from '../components/PageSkeleton'
-import { ChevronLeft, ChevronRight, Moon, Sun, BookOpen, CheckCircle2, XCircle } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Moon, Sun, BookOpen, CheckCircle2, XCircle, Trophy, Sprout, Inbox, Smile, Meh, Frown, Laugh, Zap } from 'lucide-react'
 import { cn } from '../lib/utils'
+import { getHabitIcon } from '../lib/icons'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -23,25 +24,43 @@ interface DaySummary {
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
-const MONTHS   = ['January','February','March','April','May','June','July','August','September','October','November','December']
-const WEEKDAYS = ['Mo','Tu','We','Th','Fr','Sa','Su']
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+const WEEKDAYS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su']
 const pad = (n: number) => String(n).padStart(2, '0')
 
 const QUALITY_CONFIG: Record<DayQuality, { label: string; dot: string; cell: string; text: string }> = {
-  great:   { label: 'Great',   dot: 'bg-green-500',                      cell: 'bg-green-500 dark:bg-green-500',  text: 'text-white' },
-  good:    { label: 'Good',    dot: 'bg-green-300 dark:bg-green-700',     cell: 'bg-green-300 dark:bg-green-700',  text: 'text-green-900 dark:text-white' },
-  neutral: { label: 'Neutral', dot: 'bg-yellow-400',                     cell: 'bg-yellow-400 dark:bg-yellow-500',text: 'text-yellow-900 dark:text-white' },
-  poor:    { label: 'Poor',    dot: 'bg-red-400',                        cell: 'bg-red-400 dark:bg-red-500',      text: 'text-white' },
-  no_data: { label: 'No data', dot: 'bg-muted',                          cell: '',                                text: 'text-muted-foreground' },
+  great: { label: 'Great', dot: 'bg-green-500', cell: 'bg-green-500 dark:bg-green-500', text: 'text-white' },
+  good: { label: 'Good', dot: 'bg-green-300 dark:bg-green-700', cell: 'bg-green-300 dark:bg-green-700', text: 'text-green-900 dark:text-white' },
+  neutral: { label: 'Neutral', dot: 'bg-yellow-400', cell: 'bg-yellow-400 dark:bg-yellow-500', text: 'text-yellow-900 dark:text-white' },
+  poor: { label: 'Poor', dot: 'bg-red-400', cell: 'bg-red-400 dark:bg-red-500', text: 'text-white' },
+  no_data: { label: 'No data', dot: 'bg-muted', cell: '', text: 'text-muted-foreground' },
 }
 
-const getMoodEmoji = (mood: number | null): string => {
-  if (mood === null) return '—'
-  if (mood >= 5) return '😄'
-  if (mood >= 4) return '🙂'
-  if (mood >= 3) return '😐'
-  if (mood >= 2) return '😕'
-  return '😞'
+const getMoodIcon = (mood: number | null) => {
+  if (mood === null) return null
+  if (mood >= 5) return <Laugh className="w-2.5 h-2.5 text-green-600 dark:text-green-400" />
+  if (mood >= 4) return <Smile className="w-2.5 h-2.5 text-green-500" />
+  if (mood >= 3) return <Meh className="w-2.5 h-2.5 text-amber-500" />
+  if (mood >= 2) return <Frown className="w-2.5 h-2.5 text-orange-400" />
+  return <Frown className="w-2.5 h-2.5 text-red-500" />
+}
+
+const getMoodIconMedium = (mood: number | null) => {
+  if (mood === null) return null
+  if (mood >= 5) return <Laugh className="w-4 h-4 text-green-600 dark:text-green-400" />
+  if (mood >= 4) return <Smile className="w-4 h-4 text-green-500" />
+  if (mood >= 3) return <Meh className="w-4 h-4 text-amber-500" />
+  if (mood >= 2) return <Frown className="w-4 h-4 text-orange-400" />
+  return <Frown className="w-4 h-4 text-red-500" />
+}
+
+const getMoodIconLarge = (mood: number | null) => {
+  if (mood === null) return null
+  if (mood >= 5) return <Laugh className="w-6 h-6 text-green-600 dark:text-green-400 mx-auto" />
+  if (mood >= 4) return <Smile className="w-6 h-6 text-green-500 mx-auto" />
+  if (mood >= 3) return <Meh className="w-6 h-6 text-amber-500 mx-auto" />
+  if (mood >= 2) return <Frown className="w-6 h-6 text-orange-400 mx-auto" />
+  return <Frown className="w-6 h-6 text-red-500 mx-auto" />
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -49,8 +68,8 @@ const getMoodEmoji = (mood: number | null): string => {
 export default function Biography() {
   const { data: rawData, loading, error, trigger: fetchBiography } = useGetBiography()
 
-  const [allDays,      setAllDays]      = useState<DaySummary[]>([])
-  const [viewDate,     setViewDate]     = useState(() => {
+  const [allDays, setAllDays] = useState<DaySummary[]>([])
+  const [viewDate, setViewDate] = useState(() => {
     const now = new Date()
     return new Date(now.getFullYear(), now.getMonth(), 1)
   })
@@ -61,7 +80,7 @@ export default function Biography() {
     if (Array.isArray(rawData)) setAllDays(rawData as DaySummary[])
   }, [rawData])
 
-  const year  = viewDate.getFullYear()
+  const year = viewDate.getFullYear()
   const month = viewDate.getMonth()
 
   // Build date → DaySummary lookup
@@ -72,14 +91,14 @@ export default function Biography() {
   }, [allDays])
 
   // Days in current month view
-  const daysInMonth   = new Date(year, month + 1, 0).getDate()
+  const daysInMonth = new Date(year, month + 1, 0).getDate()
   // Monday-first weekday of 1st: 0=Mon…6=Sun
-  const rawFirstDay   = new Date(year, month, 1).getDay()  // 0=Sun
-  const firstWeekday  = (rawFirstDay + 6) % 7              // convert to Mon=0
+  const rawFirstDay = new Date(year, month, 1).getDay()  // 0=Sun
+  const firstWeekday = (rawFirstDay + 6) % 7              // convert to Mon=0
 
-  const today    = new Date()
+  const today = new Date()
   const todayStr = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`
-  const dateStr  = (d: number) => `${year}-${pad(month + 1)}-${pad(d)}`
+  const dateStr = (d: number) => `${year}-${pad(month + 1)}-${pad(d)}`
 
   // Monthly stats
   const monthDays = allDays.filter(d => d.date.startsWith(`${year}-${pad(month + 1)}`))
@@ -94,7 +113,7 @@ export default function Biography() {
 
   const avgHabitRate = monthDays.filter(d => d.habitsTotal > 0).length > 0
     ? Math.round(monthDays.filter(d => d.habitsTotal > 0).reduce((a, d) => a + (d.habitsCompleted / d.habitsTotal), 0)
-        / monthDays.filter(d => d.habitsTotal > 0).length * 100)
+      / monthDays.filter(d => d.habitsTotal > 0).length * 100)
     : null
 
   const selectedDay = selectedDate ? (dayMap.get(selectedDate) ?? null) : null
@@ -139,7 +158,7 @@ export default function Biography() {
 
           {/* Legend */}
           <div className="flex items-center gap-3 mb-4 flex-wrap">
-            {(['great','good','neutral','poor'] as DayQuality[]).map(q => (
+            {(['great', 'good', 'neutral', 'poor'] as DayQuality[]).map(q => (
               <div key={q} className="flex items-center gap-1.5">
                 <div className={cn('w-3 h-3 rounded-sm', QUALITY_CONFIG[q].dot)} />
                 <span className="text-[11px] text-muted-foreground">{QUALITY_CONFIG[q].label}</span>
@@ -161,14 +180,14 @@ export default function Biography() {
 
             {/* Day cells */}
             {Array.from({ length: daysInMonth }).map((_, i) => {
-              const day       = i + 1
-              const ds        = dateStr(day)
-              const summary   = dayMap.get(ds)
-              const quality   = summary?.quality ?? 'no_data'
-              const qCfg      = QUALITY_CONFIG[quality]
-              const isToday   = ds === todayStr
+              const day = i + 1
+              const ds = dateStr(day)
+              const summary = dayMap.get(ds)
+              const quality = summary?.quality ?? 'no_data'
+              const qCfg = QUALITY_CONFIG[quality]
+              const isToday = ds === todayStr
               const isSelected = ds === selectedDate
-              const hasData   = quality !== 'no_data'
+              const hasData = quality !== 'no_data'
 
               return (
                 <button
@@ -182,10 +201,10 @@ export default function Biography() {
                   )}
                 >
                   {day}
-                  {/* Mood emoji dot */}
+                  {/* Mood icon */}
                   {summary?.mood !== null && summary?.mood !== undefined && (
-                    <span className="absolute -bottom-0.5 text-[8px] leading-none">
-                      {getMoodEmoji(summary.mood)}
+                    <span className="absolute bottom-1">
+                      {getMoodIcon(summary.mood)}
                     </span>
                   )}
                 </button>
@@ -198,10 +217,10 @@ export default function Biography() {
         {monthDays.length > 0 && (
           <div className="grid grid-cols-4 gap-2">
             {[
-              { label: 'Great',    value: qualityCounts.great,   dot: 'bg-green-500' },
-              { label: 'Good',     value: qualityCounts.good,    dot: 'bg-green-300' },
-              { label: 'Neutral',  value: qualityCounts.neutral, dot: 'bg-yellow-400' },
-              { label: 'Poor',     value: qualityCounts.poor,    dot: 'bg-red-400' },
+              { label: 'Great', value: qualityCounts.great, dot: 'bg-green-500' },
+              { label: 'Good', value: qualityCounts.good, dot: 'bg-green-300' },
+              { label: 'Neutral', value: qualityCounts.neutral, dot: 'bg-yellow-400' },
+              { label: 'Poor', value: qualityCounts.poor, dot: 'bg-red-400' },
             ].map(({ label, value, dot }) => (
               <div key={label} className="bg-card border border-border rounded-xl p-2.5 text-center">
                 <div className={cn('w-2.5 h-2.5 rounded-sm mx-auto mb-1', dot)} />
@@ -217,8 +236,8 @@ export default function Biography() {
           <div className="flex gap-2">
             {avgMood !== null && (
               <div className="flex-1 bg-card border border-border rounded-xl p-3 text-center">
-                <p className="text-xl font-bold text-foreground">{getMoodEmoji(avgMood)}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">Avg mood {avgMood}/5</p>
+                <div className="flex justify-center min-h-[1.5rem]">{getMoodIconLarge(avgMood)}</div>
+                <p className="text-xs text-muted-foreground mt-1.5">Avg mood {avgMood}/5</p>
               </div>
             )}
             {avgHabitRate !== null && (
@@ -238,8 +257,8 @@ export default function Biography() {
 
         {/* ── Empty month ── */}
         {monthDays.length === 0 && (
-          <div className="bg-card border border-border rounded-2xl p-6 text-center">
-            <p className="text-2xl mb-2">📭</p>
+          <div className="bg-card border border-border rounded-2xl p-6 text-center flex flex-col items-center justify-center">
+            <Inbox className="w-12 h-12 text-muted-foreground/60 mb-2 animate-pulse" />
             <p className="font-medium text-foreground">No data for this month</p>
             <p className="text-sm text-muted-foreground mt-1">
               Start your morning check-in to begin recording your biography.
@@ -257,9 +276,9 @@ export default function Biography() {
 // ─── Day Detail Panel ─────────────────────────────────────────────────────────
 
 function DayDetail({ day }: { day: DaySummary }) {
-  const qCfg    = QUALITY_CONFIG[day.quality]
+  const qCfg = QUALITY_CONFIG[day.quality]
   const dateObj = new Date(day.date + 'T00:00:00')
-  const label   = dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
+  const label = dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
 
   return (
     <div className="bg-card border border-border rounded-2xl overflow-hidden">
@@ -282,13 +301,25 @@ function DayDetail({ day }: { day: DaySummary }) {
           <Section icon={<Sun className="w-4 h-4 text-yellow-500 dark:text-yellow-400" />} title="Morning">
             <div className="grid grid-cols-3 gap-2">
               {day.mood !== null && (
-                <Metric label="Mood" value={`${getMoodEmoji(day.mood)} ${day.mood}/5`} />
+                <Metric label="Mood" value={
+                  <span className="flex items-center justify-center gap-1 text-sm font-semibold">
+                    {getMoodIconMedium(day.mood)} {day.mood}/5
+                  </span>
+                } />
               )}
               {day.energy !== null && (
-                <Metric label="Energy" value={`⚡ ${day.energy}/10`} />
+                <Metric label="Energy" value={
+                  <span className="flex items-center justify-center gap-1 text-sm font-semibold text-yellow-500">
+                    <Zap className="w-4 h-4" /> {day.energy}/10
+                  </span>
+                } />
               )}
               {day.sleepHours !== null && (
-                <Metric label="Sleep" value={`😴 ${day.sleepHours}h`} />
+                <Metric label="Sleep" value={
+                  <span className="flex items-center justify-center gap-1 text-sm font-semibold text-blue-400">
+                    <Moon className="w-4 h-4" /> {day.sleepHours}h
+                  </span>
+                } />
               )}
             </div>
             {day.focusText && (
@@ -304,23 +335,28 @@ function DayDetail({ day }: { day: DaySummary }) {
         {day.habits.length > 0 && (
           <Section icon={<CheckCircle2 className="w-4 h-4 text-green-500 dark:text-green-400" />} title={`Habits — ${day.habitsCompleted}/${day.habitsTotal}`}>
             <div className="space-y-1.5">
-              {day.habits.map((h, i) => (
-                <div key={i} className={cn(
-                  'flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm',
-                  h.completed
-                    ? 'bg-green-50 dark:bg-green-950/20'
-                    : 'bg-red-50 dark:bg-red-950/20',
-                )}>
-                  <span className="text-base">{h.icon}</span>
-                  <span className={cn('flex-1 font-medium', h.completed ? 'text-foreground' : 'text-muted-foreground line-through')}>
-                    {h.title}
-                  </span>
-                  {h.completed
-                    ? <CheckCircle2 className="w-4 h-4 text-green-500 dark:text-green-400 shrink-0" />
-                    : <XCircle      className="w-4 h-4 text-red-400 dark:text-red-500 shrink-0" />
-                  }
-                </div>
-              ))}
+              {day.habits.map((h, i) => {
+                const HabitIcon = getHabitIcon(h.icon)
+                return (
+                  <div key={i} className={cn(
+                    'flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm',
+                    h.completed
+                      ? 'bg-green-50 dark:bg-green-950/20'
+                      : 'bg-red-50 dark:bg-red-950/20',
+                  )}>
+                    <span className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                      <HabitIcon className="w-4 h-4 text-primary" />
+                    </span>
+                    <span className={cn('flex-1 font-medium', h.completed ? 'text-foreground' : 'text-muted-foreground line-through')}>
+                      {h.title}
+                    </span>
+                    {h.completed
+                      ? <CheckCircle2 className="w-4 h-4 text-green-500 dark:text-green-400 shrink-0" />
+                      : <XCircle className="w-4 h-4 text-red-400 dark:text-red-500 shrink-0" />
+                    }
+                  </div>
+                )
+              })}
             </div>
           </Section>
         )}
@@ -343,14 +379,18 @@ function DayDetail({ day }: { day: DaySummary }) {
               </div>
             )}
             {day.wins && (
-              <div className="mb-1.5">
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-0.5">Wins 🏆</p>
+              <div className="mb-2">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-0.5 flex items-center gap-1">
+                  Wins <Trophy className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />
+                </p>
                 <p className="text-sm text-foreground leading-snug">{day.wins}</p>
               </div>
             )}
             {day.failures && (
-              <div className="mb-1.5">
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-0.5">To improve 🌱</p>
+              <div className="mb-2">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-0.5 flex items-center gap-1">
+                  To improve <Sprout className="w-3.5 h-3.5 text-green-500" />
+                </p>
                 <p className="text-sm text-foreground leading-snug">{day.failures}</p>
               </div>
             )}
@@ -371,7 +411,11 @@ function DayDetail({ day }: { day: DaySummary }) {
           <Section icon={<BookOpen className="w-4 h-4 text-purple-500 dark:text-purple-400" />} title="Journal">
             <p className="font-semibold text-foreground text-sm">{day.journalTitle}</p>
             {day.journalMood !== null && (
-              <p className="text-xs text-muted-foreground mt-0.5">Mood: {getMoodEmoji(day.journalMood)}</p>
+              <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1.5">
+                <span>Mood:</span>
+                {getMoodIconMedium(day.journalMood)}
+                <span>({day.journalMood}/10)</span>
+              </div>
             )}
             {day.journalContent && (
               <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed line-clamp-4">
@@ -411,11 +455,11 @@ function Section({ icon, title, children }: { icon: React.ReactNode; title: stri
   )
 }
 
-function Metric({ label, value }: { label: string; value: string }) {
+function Metric({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="bg-muted/40 rounded-xl p-2 text-center">
       <p className="text-[10px] text-muted-foreground">{label}</p>
-      <p className="text-sm font-semibold text-foreground mt-0.5">{value}</p>
+      <div className="text-sm font-semibold text-foreground mt-0.5">{value}</div>
     </div>
   )
 }

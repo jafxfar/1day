@@ -155,7 +155,7 @@ export default function Journal() {
 
       {/* ── Create Dialog ── */}
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
-        <DialogContent className="max-w-sm rounded-2xl mx-4 max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-sm rounded-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>New Entry</DialogTitle></DialogHeader>
           <div className="space-y-4 pt-1">
             <Input placeholder="Title" value={title} onChange={e => setTitle(e.target.value)} className="rounded-xl" />

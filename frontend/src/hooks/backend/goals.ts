@@ -1,14 +1,19 @@
-import { useBackendFunction } from '../useBackendFunction'
+import {
+  goalsApi,
+  type CreateGoalPayload,
+  type DeleteGoalPayload,
+  type UpdateGoalPayload,
+} from '../../api/goals'
+import { useApiAction } from '../useApiAction'
 
-export function useCreateGoal() {
-  return useBackendFunction('/backend/goals/createGoal.ts')
-}
-export function useDeleteGoal() {
-  return useBackendFunction('/backend/goals/deleteGoal.ts')
-}
-export function useGetGoals() {
-  return useBackendFunction('/backend/goals/getGoals.ts')
-}
-export function useUpdateGoal() {
-  return useBackendFunction('/backend/goals/updateGoal.ts')
-}
+export const useCreateGoal = () =>
+  useApiAction<CreateGoalPayload, Awaited<ReturnType<typeof goalsApi.create>>>(goalsApi.create)
+
+export const useDeleteGoal = () =>
+  useApiAction<DeleteGoalPayload, Awaited<ReturnType<typeof goalsApi.delete>>>(goalsApi.delete)
+
+export const useGetGoals = () =>
+  useApiAction<void, Awaited<ReturnType<typeof goalsApi.getAll>>>(goalsApi.getAll)
+
+export const useUpdateGoal = () =>
+  useApiAction<UpdateGoalPayload, Awaited<ReturnType<typeof goalsApi.update>>>(goalsApi.update)

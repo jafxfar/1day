@@ -1,11 +1,21 @@
-import { useBackendFunction } from '../useBackendFunction'
+import {
+  checkinsApi,
+  type SaveEveningReflectionPayload,
+  type SaveMorningCheckinPayload,
+} from '../../api/checkins'
+import { useApiAction } from '../useApiAction'
 
-export function useGetTodayCheckins() {
-  return useBackendFunction('/backend/checkins/getTodayCheckins.ts')
-}
-export function useSaveEveningReflection() {
-  return useBackendFunction('/backend/checkins/saveEveningReflection.ts')
-}
-export function useSaveMorningCheckin() {
-  return useBackendFunction('/backend/checkins/saveMorningCheckin.ts')
-}
+export const useGetTodayCheckins = () =>
+  useApiAction<void, Awaited<ReturnType<typeof checkinsApi.getToday>>>(checkinsApi.getToday)
+
+export const useSaveEveningReflection = () =>
+  useApiAction<
+    SaveEveningReflectionPayload,
+    Awaited<ReturnType<typeof checkinsApi.saveEvening>>
+  >(checkinsApi.saveEvening)
+
+export const useSaveMorningCheckin = () =>
+  useApiAction<
+    SaveMorningCheckinPayload,
+    Awaited<ReturnType<typeof checkinsApi.saveMorning>>
+  >(checkinsApi.saveMorning)

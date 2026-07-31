@@ -4,33 +4,39 @@ import { useGetJournalEntries } from '../hooks/backend/journal'
 import { useGetHabits } from '../hooks/backend/habits'
 import { Layout } from '../components/Layout'
 import { Badge } from '../components/ui/badge'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Smile, Meh, Frown, Laugh, CheckCircle2 } from 'lucide-react'
 import type { JournalEntry, Habit } from '../lib/types'
 import { cast } from '../lib/types'
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-const MONTHS   = ['January','February','March','April','May','June','July','August','September','October','November','December']
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 const pad = (n: number) => String(n).padStart(2, '0')
-const getMoodEmoji = (mood: number) => mood >= 8 ? '😄' : mood >= 6 ? '🙂' : mood >= 4 ? '😐' : '😕'
+
+const getMoodIcon = (mood: number) => {
+  if (mood >= 8) return <Laugh className="w-5 h-5 text-green-500 inline" />
+  if (mood >= 6) return <Smile className="w-5 h-5 text-green-400 inline" />
+  if (mood >= 4) return <Meh className="w-5 h-5 text-amber-500 inline" />
+  return <Frown className="w-5 h-5 text-orange-400 inline" />
+}
 
 export default function CalendarPage() {
   const { data: rawEntries, trigger: fetchEntries } = useGetJournalEntries()
-  const { data: rawHabits,  trigger: fetchHabits  } = useGetHabits()
+  const { data: rawHabits, trigger: fetchHabits } = useGetHabits()
 
   const [entries, setEntries] = useState<JournalEntry[]>([])
-  const [habits,  setHabits]  = useState<Habit[]>([])
+  const [habits, setHabits] = useState<Habit[]>([])
 
   useEffect(() => { void fetchEntries(); void fetchHabits() }, [])
   useEffect(() => { setEntries(cast.journalEntries(rawEntries)) }, [rawEntries])
   useEffect(() => { setHabits(cast.habits(rawHabits)) }, [rawHabits])
 
   const now = new Date()
-  const [viewDate,    setViewDate]    = useState(new Date(now.getFullYear(), now.getMonth(), 1))
+  const [viewDate, setViewDate] = useState(new Date(now.getFullYear(), now.getMonth(), 1))
   const [selectedDay, setSelectedDay] = useState<number | null>(now.getDate())
 
-  const year         = viewDate.getFullYear()
-  const month        = viewDate.getMonth()
-  const daysInMonth  = new Date(year, month + 1, 0).getDate()
+  const year = viewDate.getFullYear()
+  const month = viewDate.getMonth()
+  const daysInMonth = new Date(year, month + 1, 0).getDate()
   const firstWeekday = new Date(year, month, 1).getDay()
 
   const isToday = (day: number) =>
@@ -41,7 +47,7 @@ export default function CalendarPage() {
   const entryMap = new Map<string, JournalEntry>()
   entries.forEach(e => entryMap.set(e.entryDate, e))
 
-  const selectedStr   = selectedDay ? dateStr(selectedDay) : null
+  const selectedStr = selectedDay ? dateStr(selectedDay) : null
   const selectedEntry = selectedStr ? (entryMap.get(selectedStr) ?? null) : null
   const completedToday = habits.filter(h => h.completedToday).length
 
@@ -81,19 +87,18 @@ export default function CalendarPage() {
           <div className="grid grid-cols-7 gap-y-1">
             {Array.from({ length: firstWeekday }).map((_, i) => <div key={`b-${i}`} />)}
             {Array.from({ length: daysInMonth }).map((_, i) => {
-              const day       = i + 1
-              const ds        = dateStr(day)
-              const hasEntry  = entryMap.has(ds)
-              const active    = selectedDay === day
-              const today     = isToday(day)
+              const day = i + 1
+              const ds = dateStr(day)
+              const hasEntry = entryMap.has(ds)
+              const active = selectedDay === day
+              const today = isToday(day)
 
               return (
                 <button key={day} onClick={() => setSelectedDay(day)}
-                  className={`relative flex flex-col items-center justify-center h-9 rounded-xl text-sm font-medium transition-all ${
-                    active  ? 'bg-primary text-primary-foreground'
-                    : today ? 'ring-2 ring-primary/50 text-foreground'
-                            : 'text-foreground hover:bg-accent'
-                  }`}
+                  className={`relative flex flex-col items-center justify-center h-9 rounded-xl text-sm font-medium transition-all ${active ? 'bg-primary text-primary-foreground'
+                      : today ? 'ring-2 ring-primary/50 text-foreground'
+                        : 'text-foreground hover:bg-accent'
+                    }`}
                 >
                   {day}
                   {hasEntry && !active && (
@@ -117,7 +122,7 @@ export default function CalendarPage() {
                 <div className="flex items-center justify-between">
                   <h4 className="font-semibold text-foreground">{selectedEntry.title}</h4>
                   <div className="flex items-center gap-1.5">
-                    <span className="text-xl">{getMoodEmoji(selectedEntry.mood)}</span>
+                    {getMoodIcon(selectedEntry.mood)}
                     <Badge variant="secondary" className="text-xs">{selectedEntry.mood}/10</Badge>
                   </div>
                 </div>
@@ -140,7 +145,9 @@ export default function CalendarPage() {
               <div className="mt-2 bg-card border border-border rounded-2xl p-4">
                 <p className="text-xs text-muted-foreground mb-2">Today's Activity</p>
                 <div className="flex items-center gap-3">
-                  <span className="text-2xl">✅</span>
+                  <span className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center shrink-0">
+                    <CheckCircle2 className="w-5 h-5 text-green-500" />
+                  </span>
                   <div>
                     <p className="font-medium text-foreground text-sm">{completedToday} of {habits.length} habits completed</p>
                     <p className="text-xs text-muted-foreground">Keep going!</p>

@@ -55,10 +55,10 @@ export default function Welcome() {
       {/* Actions */}
       <div className="w-full space-y-3 pb-12 pt-8">
         <Button
-          className="w-full h-12 text-base font-semibold rounded-2xl"
+          className="w-full h-12 text-base font-semibold rounded-2xl flex items-center justify-center gap-1.5"
           onClick={() => navigate('/morning')}
         >
-          Start Your Day ✨
+          Start Your Day <Sparkles className="w-5 h-5 text-yellow-400 fill-yellow-400" />
         </Button>
         <Button
           variant="ghost"

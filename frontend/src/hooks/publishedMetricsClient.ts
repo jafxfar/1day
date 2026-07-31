@@ -1,6 +1,9 @@
 import { schedulePublishedLoadMetrics } from '../publishedPerfBootstrap'
+import {
+  retoolRuntimeApi,
+  type PublishedMetricPayload,
+} from '../api/retoolRuntime'
 import { isIframeHosted } from './iframeHostedMode'
-import { getXsrfToken, XSRF_HEADER_NAME } from './xsrfUtils'
 
 // On-prem iframe-hosted apps run in a sandboxed null-origin iframe whose fetch can't carry the
 // session cookie, so they hand each batch to the parent broker over postMessage. Cloud published
@@ -10,9 +13,7 @@ const __PARENT_ORIGIN =
   new URLSearchParams(window.location.search).get('retool-parent-origin') ?? window.location.origin
 
 type RrMetricTags = Record<string, string> | undefined
-type RrMetricPayload =
-  | { type: 'increment'; metric: string; tags?: RrMetricTags }
-  | { type: 'distribution'; metric: string; value: number; tags?: RrMetricTags }
+type RrMetricPayload = PublishedMetricPayload
 
 const METRICS_FLUSH_MS = 10000
 const METRICS_MAX_BATCH = 50
@@ -62,18 +63,8 @@ async function flushPublishedMetrics(): Promise<void> {
     return
   }
   const metricNames = payloads.map((p) => p.metric)
-  const body = JSON.stringify({ payloads })
   try {
-    await fetch('/_/api/metrics', {
-      method: 'POST',
-      credentials: 'same-origin',
-      headers: {
-        'Content-Type': 'application/json',
-        [XSRF_HEADER_NAME]: getXsrfToken(),
-      },
-      body,
-      keepalive: true,
-    })
+    await retoolRuntimeApi.publishMetrics(payloads)
   } catch (err) {
     console.warn('[rr.published_fe.metrics] flush failed', { count: payloads.length, metrics: metricNames, err })
   }

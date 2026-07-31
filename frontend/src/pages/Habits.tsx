@@ -6,11 +6,15 @@ import { PageSkeleton, PageError } from '../components/PageSkeleton'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog'
-import { Plus, Flame, CheckCircle2 } from 'lucide-react'
+import { Plus, Flame, CheckCircle2, X } from 'lucide-react'
 import type { Habit, HabitType } from '../lib/types'
 import { cast } from '../lib/types'
+import { getHabitIcon } from '../lib/icons'
 
-const HABIT_ICONS = ['🧘','💪','📚','🚿','💧','🏃','🥗','😴','📝','🎯','🧠','❤️','🎵','🌿','☀️','✏️']
+const HABIT_ICONS = [
+  'Brain', 'Dumbbell', 'BookOpen', 'ShowerHead', 'Droplets', 'Activity', 'Apple', 'Moon',
+  'PenTool', 'Target', 'Heart', 'Smile', 'Music', 'Leaf', 'Sun', 'ClipboardList'
+]
 
 interface ToggleResult {
   habitId: string
@@ -25,17 +29,17 @@ export default function Habits() {
   const { trigger: toggleHabitFn } = useToggleHabit()
   const { trigger: deleteHabit } = useDeleteHabit()
 
-  const [habits,        setHabits]        = useState<Habit[]>([])
-  const [showCreate,    setShowCreate]    = useState(false)
-  const [title,         setTitle]         = useState('')
-  const [selectedIcon,  setSelectedIcon]  = useState('🎯')
-  const [type,          setType]          = useState<HabitType>('positive')
+  const [habits, setHabits] = useState<Habit[]>([])
+  const [showCreate, setShowCreate] = useState(false)
+  const [title, setTitle] = useState('')
+  const [selectedIcon, setSelectedIcon] = useState('Target')
+  const [type, setType] = useState<HabitType>('positive')
 
   useEffect(() => { void fetchHabits() }, [])
   useEffect(() => { setHabits(cast.habits(rawHabits)) }, [rawHabits])
 
   const completedCount = habits.filter(h => h.completedToday).length
-  const bestStreak     = habits.reduce((max, h) => Math.max(max, h.currentStreak), 0)
+  const bestStreak = habits.reduce((max, h) => Math.max(max, h.currentStreak), 0)
   const totalStreakDays = habits.reduce((sum, h) => sum + h.longestStreak, 0)
 
   /** Optimistic toggle: update UI immediately, reconcile with server result */
@@ -57,8 +61,8 @@ export default function Habits() {
           h.id !== id ? h : {
             ...h,
             completedToday: result.completedToday,
-            currentStreak:  result.currentStreak,
-            longestStreak:  result.longestStreak,
+            currentStreak: result.currentStreak,
+            longestStreak: result.longestStreak,
           }
         )
       )
@@ -69,7 +73,7 @@ export default function Habits() {
     if (!title.trim()) return
     const newHabit = await createHabit({ title: title.trim(), type, icon: selectedIcon, category: 'general' })
     if (newHabit) setHabits(prev => [...prev, cast.habits([newHabit])[0]!])
-    setTitle(''); setSelectedIcon('🎯'); setType('positive')
+    setTitle(''); setSelectedIcon('Target'); setType('positive')
     setShowCreate(false)
   }
 
@@ -160,25 +164,26 @@ export default function Habits() {
             <div>
               <p className="text-xs text-muted-foreground mb-2">Choose icon</p>
               <div className="grid grid-cols-8 gap-1.5">
-                {HABIT_ICONS.map(icon => (
-                  <button key={icon} onClick={() => setSelectedIcon(icon)}
-                    className={`aspect-square flex items-center justify-center text-lg rounded-xl transition-all ${
-                      selectedIcon === icon ? 'bg-primary/10 ring-2 ring-primary/40 scale-110' : 'bg-muted hover:bg-accent'
-                    }`}
-                  >
-                    {icon}
-                  </button>
-                ))}
+                {HABIT_ICONS.map(icon => {
+                  const IconComp = getHabitIcon(icon)
+                  return (
+                    <button key={icon} onClick={() => setSelectedIcon(icon)}
+                      className={`aspect-square flex items-center justify-center rounded-xl transition-all ${selectedIcon === icon ? 'bg-primary/10 ring-2 ring-primary/40 scale-110' : 'bg-muted hover:bg-accent'
+                        }`}
+                    >
+                      <IconComp className={`w-5 h-5 ${selectedIcon === icon ? 'text-primary' : 'text-muted-foreground'}`} />
+                    </button>
+                  )
+                })}
               </div>
             </div>
             <div className="flex gap-2">
               {(['positive', 'negative'] as const).map(t => (
                 <button key={t} onClick={() => setType(t)}
-                  className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all border ${
-                    type === t
+                  className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all border ${type === t
                       ? 'bg-primary text-primary-foreground border-primary'
                       : 'bg-card text-muted-foreground border-border hover:text-foreground'
-                  }`}
+                    }`}
                 >
                   {t === 'positive' ? '✅ Build' : '🚫 Break'}
                 </button>
@@ -204,13 +209,15 @@ function HabitCard({
   onToggle: (id: string) => void
   onDelete: (id: string) => void
 }) {
+  const IconComp = getHabitIcon(habit.icon)
   return (
-    <div className={`flex items-center gap-3 rounded-2xl px-4 py-3.5 border transition-all ${
-      habit.completedToday
+    <div className={`flex items-center gap-3 rounded-2xl px-4 py-3.5 border transition-all ${habit.completedToday
         ? 'bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800'
         : 'bg-card border-border'
-    }`}>
-      <span className="text-2xl">{habit.icon}</span>
+      }`}>
+      <span className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+        <IconComp className="w-4 h-4 text-primary" />
+      </span>
       <div className="flex-1 min-w-0">
         <p className={`text-sm font-medium ${habit.completedToday ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
           {habit.title}
@@ -225,15 +232,14 @@ function HabitCard({
         className="p-1 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
         aria-label="Delete habit"
       >
-        <span className="text-xs">✕</span>
+        <X className="w-3.5 h-3.5" />
       </button>
       <button
         onClick={() => onToggle(habit.id)}
-        className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all shrink-0 ${
-          habit.completedToday
+        className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all shrink-0 ${habit.completedToday
             ? 'border-green-500 bg-green-500 dark:border-green-400 dark:bg-green-400'
             : 'border-border hover:border-primary/60'
-        }`}
+          }`}
       >
         {habit.completedToday && <span className="text-white text-sm font-bold leading-none">✓</span>}
       </button>

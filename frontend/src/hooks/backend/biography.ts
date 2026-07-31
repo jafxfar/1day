@@ -1,5 +1,5 @@
-import { useBackendFunction } from '../useBackendFunction'
+import { biographyApi } from '../../api/biography'
+import { useApiAction } from '../useApiAction'
 
-export function useGetBiography() {
-  return useBackendFunction('/backend/biography/getBiography.ts')
-}
+export const useGetBiography = () =>
+  useApiAction<void, Awaited<ReturnType<typeof biographyApi.getAll>>>(biographyApi.getAll)
