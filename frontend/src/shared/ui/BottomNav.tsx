@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import {
@@ -7,7 +6,6 @@ import {
   Home,
   Moon,
   Plus,
-  ScrollText,
   Sun,
   Target,
 } from 'lucide-react'
@@ -20,9 +18,9 @@ import {
 
 const NAV_ITEMS = [
   { to: '/dashboard', icon: Home, label: 'Home' },
-  { to: '/goals', icon: Target, label: 'Goals' },
   { to: '/habits', icon: CheckSquare2, label: 'Habits' },
-  { to: '/biography', icon: ScrollText, label: 'Story' },
+  { to: '/journal', icon: BookOpen, label: 'Journal' },
+  { to: '/goals', icon: Target, label: 'Goals' },
 ] as const
 
 export function BottomNav() {
@@ -96,12 +94,12 @@ export function BottomNav() {
           <div className="mx-auto h-1 w-10 rounded-full bg-white/20" />
           <DialogTitle className="mt-2 text-2xl font-bold tracking-[-0.04em]">Quick action</DialogTitle>
           <DialogDescription className="text-[#92928d]">
-            Add a moment to your day.
+            Capture or close the day in three taps or fewer.
           </DialogDescription>
           <div className="grid grid-cols-3 gap-2 pt-2">
             {[
               { path: '/morning', label: 'Morning', icon: Sun },
-              { path: '/journal', label: 'Journal', icon: BookOpen },
+              { path: '/journal?compose=1', label: 'Note', icon: BookOpen },
               { path: '/evening', label: 'Evening', icon: Moon },
             ].map(({ path, label, icon: Icon }) => (
               <button

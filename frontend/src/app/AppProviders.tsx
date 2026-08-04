@@ -1,6 +1,7 @@
 import { RouterProvider } from 'react-router-dom'
 import { SessionProvider } from '../entities/auth/model/SessionProvider'
 import { CheckinsProvider } from '../entities/checkins/model/CheckinsProvider'
+import { OnboardingProvider } from '../entities/onboarding/model/OnboardingProvider'
 import { router } from './router'
 
 export const AppProviders = () => (
@@ -12,9 +13,11 @@ export const AppProviders = () => (
       Skip to content
     </a>
     <SessionProvider>
-      <CheckinsProvider>
-        <RouterProvider router={router} />
-      </CheckinsProvider>
+      <OnboardingProvider>
+        <CheckinsProvider>
+          <RouterProvider router={router} />
+        </CheckinsProvider>
+      </OnboardingProvider>
     </SessionProvider>
   </>
 )

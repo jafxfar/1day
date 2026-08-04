@@ -7,7 +7,7 @@ import { useGetGoals } from '../entities/goals/model/useGoals'
 import { useGetHabits } from '../entities/habits/model/useHabits'
 import { useGetJournalEntries } from '../entities/journal/model/useJournal'
 import { Layout } from '../shared/ui/Layout'
-import { ChevronRight, Target, CheckSquare2, BookOpen, Flame, Bot, Bell, Moon, Lock, Settings, TrendingUp, Calendar, LogOut, CheckCircle2, Clock } from 'lucide-react'
+import { ChevronRight, Target, CheckSquare2, BookOpen, Flame, Bot, Bell, Moon, Lock, Settings, TrendingUp, Calendar, LogOut, CheckCircle2, Clock, ScrollText } from 'lucide-react'
 
 const MVP_CHECKLIST = [
   { label: 'Morning Experience', done: true },
@@ -57,6 +57,7 @@ export default function Profile() {
   const menuItems = [
     { icon: Bot, label: 'AI Coach', onClick: () => navigate('/ai') },
     { icon: Calendar, label: 'Calendar', onClick: () => navigate('/calendar') },
+    { icon: ScrollText, label: 'Life story', onClick: () => navigate('/biography') },
     { icon: Bell, label: 'Notifications', onClick: () => { } },
     { icon: Moon, label: 'Appearance', onClick: () => { } },
     { icon: Lock, label: 'Privacy', onClick: () => { } },
@@ -66,7 +67,7 @@ export default function Profile() {
       label: 'Log Out',
       onClick: async () => {
         await logout()
-        navigate('/welcome')
+        navigate('/introduction')
       },
     },
   ]

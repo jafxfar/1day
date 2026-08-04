@@ -4,16 +4,20 @@ import { ProtectedRoute } from '../features/auth/ui/ProtectedRoute'
 import { PageSkeleton } from '../shared/ui/PageSkeleton'
 import {
   AICoach,
+  AppSetupWizard,
   Auth,
   Biography,
   CalendarPage,
   Dashboard,
   EveningReflection,
+  FirstDayBridge,
   Goals,
   Habits,
+  Introduction,
   Journal,
   MorningExperience,
   Profile,
+  ProfileOnboarding,
   Welcome,
 } from './routePages'
 
@@ -26,9 +30,13 @@ const protectedPage = (content: ReactNode) => (
 )
 
 export const router = createBrowserRouter([
-  { path: '/', element: <Navigate to="/welcome" replace /> },
+  { path: '/', element: <Navigate to="/introduction" replace /> },
+  { path: '/introduction', element: page(<Introduction />) },
   { path: '/welcome', element: page(<Welcome />) },
   { path: '/auth', element: page(<Auth />) },
+  { path: '/onboarding/profile', element: protectedPage(<ProfileOnboarding />) },
+  { path: '/onboarding/setup', element: protectedPage(<AppSetupWizard />) },
+  { path: '/onboarding/first-day', element: protectedPage(<FirstDayBridge />) },
   { path: '/morning', element: protectedPage(<MorningExperience />) },
   { path: '/evening', element: protectedPage(<EveningReflection />) },
   { path: '/dashboard', element: protectedPage(<Dashboard />) },
@@ -39,5 +47,5 @@ export const router = createBrowserRouter([
   { path: '/biography', element: protectedPage(<Biography />) },
   { path: '/ai', element: protectedPage(<AICoach />) },
   { path: '/profile', element: protectedPage(<Profile />) },
-  { path: '*', element: <Navigate to="/welcome" replace /> },
+  { path: '*', element: <Navigate to="/introduction" replace /> },
 ])

@@ -1,68 +1,101 @@
-
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '../shared/ui/button'
 import { Input } from '../shared/ui/input'
 import { Slider } from '../shared/ui/slider'
 import { useCheckins } from '../entities/checkins/model/useCheckinsContext'
 import { useSaveMorningCheckin } from '../entities/checkins/model/useCheckins'
-import { AlertTriangle, BatteryCharging, CheckCircle2, ChevronLeft, Frown, Laugh, Meh, MessageSquare, Moon, Smile, Sun, Target, Zap } from 'lucide-react'
+import { useGetGoals } from '../entities/goals/model/useGoals'
+import {
+  buildFocusSuggestions,
+  getGoalPeriodLabel,
+  pickMainGoal,
+} from '../shared/lib/pickMainGoal'
+import {
+  BatteryCharging,
+  ChevronLeft,
+  Frown,
+  Laugh,
+  Meh,
+  Moon,
+  Smile,
+  Sun,
+  Target,
+  Zap,
+} from 'lucide-react'
 
-const SLEEP_OPTIONS = [4, 5, 6, 7, 8, 9, 10] as const
+const SLEEP_OPTIONS = [5, 6, 7, 8, 9] as const
 const MOODS = [
-  { value: 1, icon: Frown, label: 'Terrible' },
-  { value: 2, icon: Frown, label: 'Bad' },
+  { value: 1, icon: Frown, label: 'Bad' },
+  { value: 2, icon: Frown, label: 'Low' },
   { value: 3, icon: Meh, label: 'Okay' },
   { value: 4, icon: Smile, label: 'Good' },
-  { value: 5, icon: Laugh, label: 'Amazing' },
-]
-const FOCUS_SUGGESTIONS = [
-  'Deep work on my main project',
-  'Clear inbox & communications',
-  'Exercise & healthy eating',
-  'Connect with loved ones',
-  'Learn something new',
-]
-const STEPS = [
-  { title: 'Good morning!', icon: Sun, subtitle: 'How did you sleep last night?' },
-  { title: 'Energy check', icon: BatteryCharging, subtitle: 'Rate your current energy level' },
-  { title: "Today's mood", icon: MessageSquare, subtitle: 'How are you feeling right now?' },
-  { title: "Today's focus", icon: Target, subtitle: 'What is your one big priority?' },
+  { value: 5, icon: Laugh, label: 'Great' },
 ]
 
 export default function MorningExperience() {
   const navigate = useNavigate()
-  const { refetch: refetchCheckins } = useCheckins()
+  const { hasCompletedMorning, isLoading: isLoadingCheckins, refetch: refetchCheckins } = useCheckins()
   const { trigger: saveCheckin, loading: saving } = useSaveMorningCheckin()
+  const { data: goals = [], trigger: fetchGoals } = useGetGoals()
 
-  const [step, setStep] = useState(0)
   const [sleepHours, setSleep] = useState(7)
   const [energy, setEnergy] = useState([7])
-  const [mood, setMood] = useState(3)
+  const [mood, setMood] = useState<number | null>(null)
   const [focus, setFocus] = useState('')
+  const [showDetails, setShowDetails] = useState(false)
+
+  useEffect(() => {
+    void fetchGoals()
+  }, [fetchGoals])
+
+  useEffect(() => {
+    if (!isLoadingCheckins && hasCompletedMorning) {
+      navigate('/dashboard', { replace: true })
+    }
+  }, [hasCompletedMorning, isLoadingCheckins, navigate])
+
+  const recommendedGoal = useMemo(() => pickMainGoal(goals), [goals])
+  const focusSuggestions = useMemo(
+    () => buildFocusSuggestions(recommendedGoal),
+    [recommendedGoal],
+  )
+
+  useEffect(() => {
+    if (!focus && focusSuggestions[0]) {
+      setFocus(focusSuggestions[0])
+    }
+  }, [focus, focusSuggestions])
 
   const today = new Date().toLocaleDateString('en-US', {
     weekday: 'long', month: 'long', day: 'numeric',
   })
 
-  const handleNext = async () => {
-    if (step < STEPS.length - 1) {
-      setStep(s => s + 1)
-      return
-    }
+  const canStart = mood !== null && focus.trim().length > 0
+
+  const handlePickFocus = (value: string) => {
+    setFocus(value)
+  }
+
+  const handleStartDay = async () => {
+    if (mood === null) return
+
+    const focusText = focus.trim() || focusSuggestions[0] || 'Make progress today'
 
     await saveCheckin({
       sleepHours,
       energy: energy[0] ?? 7,
       mood,
-      focusText: focus.trim() || 'Make progress today',
+      focusText,
     })
 
     refetchCheckins()
-    navigate('/dashboard')
+    navigate('/dashboard', { replace: true })
   }
 
-  const current = STEPS[step]!
+  const handleToggleDetails = () => {
+    setShowDetails(value => !value)
+  }
 
   return (
     <main className="app-page min-h-dvh bg-[#141414] px-4 py-4 text-[#F4F4F0] sm:px-6 sm:py-6">
@@ -70,159 +103,173 @@ export default function MorningExperience() {
         <header className="app-header flex items-center justify-between">
           <button
             type="button"
-            aria-label={step > 0 ? 'Go to previous question' : 'Back to welcome'}
-            onClick={() => (step > 0 ? setStep(s => s - 1) : navigate('/welcome'))}
+            aria-label="Back"
+            onClick={() => navigate(-1)}
             className="icon-button pressable flex size-11 items-center justify-center rounded-[16px] border border-white/10 transition hover:bg-white/5 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D7FF35]"
           >
             <ChevronLeft className="size-5" />
           </button>
-          <div className="flex items-center gap-1.5" aria-label={`Step ${step + 1} of ${STEPS.length}`}>
-            {STEPS.map((_, i) => (
-              <span
-                key={i}
-                className={`h-1.5 rounded-full transition-all duration-300 ${
-                  i <= step ? 'w-7 bg-[#D7FF35]' : 'w-2 bg-white/15'
-                }`}
-              />
-            ))}
-          </div>
-          <span className="text-xs font-bold tabular-nums text-[#92928D]">
-            {step + 1}/{STEPS.length}
-          </span>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#92928D]">{today}</p>
+          <span className="w-11" aria-hidden="true" />
         </header>
 
-        <section className="flex flex-1 flex-col py-8">
-          <p className="mb-8 text-xs font-semibold uppercase tracking-[0.16em] text-[#92928D]">{today}</p>
-          <div className="mb-8">
+        <section className="flex flex-1 flex-col gap-6 py-6">
+          <div>
             <div className="mb-4 flex size-12 items-center justify-center rounded-[16px] bg-[#D7FF35] text-[#151515]">
-              <current.icon className="size-6" strokeWidth={2.2} />
+              <Sun className="size-6" strokeWidth={2.2} />
             </div>
-            <h1 className="text-balance text-5xl font-black leading-[0.95] tracking-[-0.055em]">{current.title}</h1>
-            <p className="mt-3 text-base text-[#92928D]">{current.subtitle}</p>
+            <h1 className="text-balance text-4xl font-black leading-[0.95] tracking-[-0.055em] sm:text-5xl">
+              How are you today?
+            </h1>
+            <p className="mt-3 text-sm text-[#92928D]">
+              Three taps: mood, focus, start.
+            </p>
           </div>
 
-          <div className="surface-paper rounded-[28px] bg-[#F4F4F0] p-4 text-[#151515] sm:p-5">
-            {step === 0 && (
-              <div>
-                <p className="mb-4 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.12em] text-[#92928D]">
-                  <Moon className="size-4" />
-                  Hours slept
-                </p>
-                <div className="grid grid-cols-4 gap-2">
-                  {SLEEP_OPTIONS.map(h => (
-                    <button
-                      key={h}
-                      type="button"
-                      aria-pressed={sleepHours === h}
-                      onClick={() => setSleep(h)}
-                      className={`pressable min-h-12 rounded-[16px] text-base font-black transition active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#151515] ${
-                        sleepHours === h
-                          ? 'bg-[#1D1D1D] text-[#D7FF35]'
-                          : 'bg-[#F4F4F0] text-[#92928D] hover:text-[#151515]'
-                      }`}
-                    >
-                      {h}h
-                    </button>
-                  ))}
-                </div>
-                <div className="mt-5 text-sm font-semibold text-[#92928D]">
-                  {sleepHours >= 8 ? (
-                    <span className="flex items-center gap-2"><CheckCircle2 className="size-4" /> Excellent rest</span>
-                  ) : sleepHours >= 7 ? (
-                    <span className="flex items-center gap-2"><Smile className="size-4" /> Solid sleep</span>
-                  ) : sleepHours >= 6 ? (
-                    <span className="flex items-center gap-2"><AlertTriangle className="size-4" /> A little short</span>
-                  ) : (
-                    <span className="flex items-center gap-2"><Moon className="size-4" /> Protect your energy today</span>
-                  )}
-                </div>
+          <div className="space-y-5 rounded-[28px] border border-white/10 bg-[#292929] p-4 text-[#F4F4F0] sm:p-5">
+            {/* Touch 1: mood */}
+            <div>
+              <p className="mb-3 text-xs font-bold uppercase tracking-[0.12em] text-[#92928D]">
+                Mood
+              </p>
+              <div className="grid grid-cols-5 gap-2" role="group" aria-label="Today's mood">
+                {MOODS.map(({ value, icon: Icon, label }) => (
+                  <button
+                    key={value}
+                    type="button"
+                    aria-label={label}
+                    aria-pressed={mood === value}
+                    onClick={() => setMood(value)}
+                    className={`pressable flex min-h-18 flex-col items-center justify-center gap-1.5 rounded-[16px] transition active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D7FF35] ${
+                      mood === value ? 'bg-[#1D1D1D] text-[#D7FF35]' : 'bg-white/6 text-[#92928D] hover:bg-white/10 hover:text-[#F4F4F0]'
+                    }`}
+                  >
+                    <Icon className="size-5" />
+                    <span className="text-[10px] font-bold">{label}</span>
+                  </button>
+                ))}
               </div>
-            )}
+            </div>
 
-            {step === 1 && (
-              <div className="py-2">
-                <div className="mb-8 flex items-end justify-center">
-                  <span className="text-8xl font-black leading-none tracking-[-0.07em] tabular-nums">{energy[0]}</span>
-                  <span className="mb-2 text-xl font-bold text-[#92928D]">/10</span>
-                </div>
-                <Slider value={energy} onValueChange={setEnergy} min={1} max={10} step={1} aria-label="Energy level" />
-                <div className="mt-4 flex justify-between text-xs font-semibold text-[#92928D]">
-                  <span className="flex items-center gap-1.5"><Frown className="size-4" /> Exhausted</span>
-                  <span className="flex items-center gap-1.5">Energized <Zap className="size-4" /></span>
-                </div>
-              </div>
-            )}
-
-            {step === 2 && (
-              <div>
-                <div className="grid grid-cols-5 gap-2">
-                  {MOODS.map(({ value, icon: Icon, label }) => (
-                    <button
-                      key={value}
-                      type="button"
-                      aria-label={label}
-                      aria-pressed={mood === value}
-                      onClick={() => setMood(value)}
-                      className={`pressable flex min-h-20 flex-col items-center justify-center gap-2 rounded-[16px] transition active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#151515] ${
-                        mood === value ? 'bg-[#1D1D1D] text-[#D7FF35]' : 'bg-[#F4F4F0] text-[#92928D] hover:text-[#151515]'
-                      }`}
-                    >
-                      <Icon className="size-6" />
-                      <span className="text-[10px] font-bold">{label}</span>
-                    </button>
-                  ))}
-                </div>
-                <p className="mt-5 text-sm leading-6 text-[#92928D]">
-                  {mood >= 4
-                    ? 'Use that momentum on the work that matters.'
-                    : mood === 3
-                      ? 'Small, deliberate steps are enough today.'
-                      : 'Lower the bar, protect your energy, and be kind to yourself.'}
+            {/* Touch 2: focus quick pick */}
+            <div>
+              <div className="mb-2 flex items-center gap-2">
+                <Target className="size-4 text-[#92928D]" />
+                <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#92928D]">
+                  Today's focus
                 </p>
               </div>
-            )}
 
-            {step === 3 && (
-              <div>
-                <label htmlFor="daily-focus" className="mb-2 block text-xs font-bold uppercase tracking-[0.12em] text-[#92928D]">
-                  One clear outcome
-                </label>
-                <Input
-                  id="daily-focus"
-                  placeholder="What needs your best attention?"
-                  value={focus}
-                  onChange={e => setFocus(e.target.value)}
-                  className="h-14 rounded-[16px] border-[#151515]/15 bg-[#F4F4F0] px-4 text-base text-[#151515] placeholder:text-[#92928D] focus-visible:border-[#151515] focus-visible:ring-[#151515]/20"
-                />
-                <p className="mb-2 mt-5 text-xs font-bold uppercase tracking-[0.12em] text-[#92928D]">Quick picks</p>
-                <div className="space-y-2">
-                  {FOCUS_SUGGESTIONS.map(s => (
-                    <button
-                      key={s}
-                      type="button"
-                      aria-pressed={focus === s}
-                      onClick={() => setFocus(s)}
-                      className={`pressable w-full rounded-[16px] px-4 py-3 text-left text-sm font-semibold transition active:scale-[0.985] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#151515] ${
-                        focus === s ? 'bg-[#1D1D1D] text-[#D7FF35]' : 'bg-[#F4F4F0] text-[#92928D] hover:text-[#151515]'
-                      }`}
-                    >
-                      {s}
-                    </button>
-                  ))}
-                </div>
+              {recommendedGoal && (
+                <p className="mb-3 text-xs leading-5 text-[#92928D]">
+                  From your {getGoalPeriodLabel(recommendedGoal.periodType)} goal: {recommendedGoal.title}
+                </p>
+              )}
+
+              <div className="space-y-2" role="listbox" aria-label="Focus suggestions">
+                {focusSuggestions.map(suggestion => (
+                  <button
+                    key={suggestion}
+                    type="button"
+                    role="option"
+                    aria-selected={focus === suggestion}
+                    aria-pressed={focus === suggestion}
+                    onClick={() => handlePickFocus(suggestion)}
+                    className={`pressable w-full rounded-[16px] px-4 py-3 text-left text-sm font-semibold transition active:scale-[0.985] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D7FF35] ${
+                      focus === suggestion ? 'bg-[#1D1D1D] text-[#D7FF35]' : 'bg-white/6 text-[#92928D] hover:bg-white/10 hover:text-[#F4F4F0]'
+                    }`}
+                  >
+                    {suggestion}
+                  </button>
+                ))}
               </div>
-            )}
+
+              <Input
+                id="daily-focus"
+                aria-label="Custom focus"
+                placeholder="Or type your own…"
+                value={focusSuggestions.includes(focus) ? '' : focus}
+                onChange={e => setFocus(e.target.value)}
+                className="mt-3 h-12 rounded-[16px] text-sm"
+              />
+            </div>
+
+            {/* Optional sleep/energy — not required for 3-touch path */}
+            <div>
+              <button
+                type="button"
+                onClick={handleToggleDetails}
+                className="pressable text-xs font-semibold text-[#92928D] underline-offset-2 hover:text-[#F4F4F0] hover:underline"
+                aria-expanded={showDetails}
+              >
+                {showDetails ? 'Hide sleep & energy' : 'Adjust sleep & energy (optional)'}
+              </button>
+
+              {showDetails && (
+                <div className="mt-4 space-y-5">
+                  <div>
+                    <p className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.12em] text-[#92928D]">
+                      <Moon className="size-3.5" /> Sleep
+                    </p>
+                    <div className="grid grid-cols-5 gap-2">
+                      {SLEEP_OPTIONS.map(h => (
+                        <button
+                          key={h}
+                          type="button"
+                          aria-pressed={sleepHours === h}
+                          onClick={() => setSleep(h)}
+                          className={`pressable min-h-11 rounded-[14px] text-sm font-black transition active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D7FF35] ${
+                            sleepHours === h
+                              ? 'bg-[#1D1D1D] text-[#D7FF35]'
+                              : 'bg-white/6 text-[#92928D] hover:bg-white/10 hover:text-[#F4F4F0]'
+                          }`}
+                        >
+                          {h}h
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="mb-3 flex items-center justify-between text-xs font-bold uppercase tracking-[0.12em] text-[#92928D]">
+                      <span className="flex items-center gap-2">
+                        <BatteryCharging className="size-3.5" /> Energy
+                      </span>
+                      <span className="tabular-nums text-[#F4F4F0]">{energy[0]}/10</span>
+                    </p>
+                    <Slider
+                      value={energy}
+                      onValueChange={setEnergy}
+                      min={1}
+                      max={10}
+                      step={1}
+                      aria-label="Energy level"
+                    />
+                    <div className="mt-2 flex justify-between text-[10px] font-semibold text-[#92928D]">
+                      <span className="flex items-center gap-1"><Frown className="size-3" /> Low</span>
+                      <span className="flex items-center gap-1">High <Zap className="size-3" /></span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </section>
 
         <footer>
           <Button
             className="pressable h-14 w-full rounded-[18px] bg-[#D7FF35] text-base font-bold text-[#151515] hover:bg-[#D7FF35]/90 active:scale-[0.985] focus-visible:ring-[#D7FF35]/60"
-            onClick={() => void handleNext()}
-            disabled={saving}
+            onClick={() => void handleStartDay()}
+            disabled={!canStart || saving}
           >
-            {saving ? 'Saving…' : step === STEPS.length - 1 ? 'Start my day' : 'Continue'}
+            {saving ? 'Saving…' : 'Start my day'}
           </Button>
+          {!mood && (
+            <p className="mt-2 text-center text-xs text-[#92928D]">Pick a mood to continue</p>
+          )}
+          {mood && !focus.trim() && focusSuggestions.length === 0 && (
+            <p className="mt-2 text-center text-xs text-[#92928D]">Add a focus for today</p>
+          )}
         </footer>
       </div>
     </main>

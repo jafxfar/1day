@@ -415,3 +415,131 @@ select:focus-visible {
     backdrop-filter: none !important;
   }
 }
+
+/* Journal rich editor + feed HTML */
+.journal-editor .ProseMirror {
+  outline: none;
+  min-height: 11rem;
+}
+
+.journal-editor .ProseMirror p {
+  margin: 0.35em 0;
+}
+
+.journal-editor .ProseMirror ul,
+.journal-editor .ProseMirror ol {
+  margin: 0.5em 0;
+  padding-left: 1.25rem;
+}
+
+.journal-editor .ProseMirror ul {
+  list-style: disc;
+}
+
+.journal-editor .ProseMirror ol {
+  list-style: decimal;
+}
+
+.journal-editor .ProseMirror table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.75em 0;
+  overflow: hidden;
+}
+
+.journal-editor .ProseMirror th,
+.journal-editor .ProseMirror td {
+  border: 1px solid rgb(255 255 255 / 0.15);
+  padding: 0.4rem 0.55rem;
+  vertical-align: top;
+  min-width: 3rem;
+}
+
+.journal-editor .ProseMirror th {
+  background: rgb(255 255 255 / 0.06);
+  font-weight: 700;
+}
+
+.journal-editor .ProseMirror img.journal-editor-image,
+.journal-editor .ProseMirror img {
+  display: block;
+  max-width: 100%;
+  max-height: 16rem;
+  border-radius: 0.75rem;
+  margin: 0.6rem 0;
+}
+
+.journal-editor .ProseMirror audio,
+.journal-editor .ProseMirror video {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  margin: 0.6rem 0;
+  border-radius: 0.75rem;
+}
+
+.journal-editor .ProseMirror video {
+  max-height: 16rem;
+  background: #151515;
+}
+
+.journal-entry-body {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 8;
+  overflow: hidden;
+}
+
+.journal-entry-body p {
+  margin: 0.25em 0;
+}
+
+.journal-entry-body ul,
+.journal-entry-body ol {
+  margin: 0.4em 0;
+  padding-left: 1.15rem;
+}
+
+.journal-entry-body ul {
+  list-style: disc;
+}
+
+.journal-entry-body ol {
+  list-style: decimal;
+}
+
+.journal-entry-body table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.5em 0;
+  font-size: 0.85em;
+}
+
+.journal-entry-body th,
+.journal-entry-body td {
+  border: 1px solid rgb(21 21 21 / 0.15);
+  padding: 0.25rem 0.4rem;
+}
+
+.journal-entry-body img {
+  display: block;
+  max-width: 100%;
+  max-height: 10rem;
+  border-radius: 0.75rem;
+  margin: 0.5rem 0;
+  object-fit: cover;
+}
+
+.journal-entry-body audio,
+.journal-entry-body video {
+  display: block;
+  width: 100%;
+  max-width: 22rem;
+  margin: 0.5rem 0;
+  border-radius: 0.75rem;
+}
+
+.journal-entry-body video {
+  max-height: 10rem;
+  background: #151515;
+}

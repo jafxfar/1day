@@ -17,6 +17,14 @@ export declare const apiRoutes: {
         readonly evening: "/api/checkins/evening";
     };
     readonly biography: "/api/biography";
+    readonly onboarding: {
+        readonly root: "/api/onboarding";
+        readonly profile: "/api/onboarding/profile";
+        readonly setup: "/api/onboarding/setup";
+        readonly complete: "/api/onboarding/complete";
+        readonly skip: "/api/onboarding/skip";
+        readonly firstDayComplete: "/api/onboarding/first-day-complete";
+    };
 };
 export declare const goalCategories: readonly ["health", "career", "learning", "relationships", "finance", "personal"];
 export declare const periodTypes: readonly ["long_term", "monthly", "weekly", "daily"];
@@ -25,6 +33,8 @@ export type GoalCategory = typeof goalCategories[number];
 export type PeriodType = typeof periodTypes[number];
 export type HabitType = typeof habitTypes[number];
 export type CheckinType = 'morning' | 'evening';
+export type OnboardingStatus = 'in_progress' | 'skipped' | 'completed';
+export type CommunicationStyle = 'careful' | 'friendly' | 'mentor' | 'coach';
 export interface AuthUser {
     id: number;
     email: string;
@@ -128,6 +138,31 @@ export interface BiographyDay {
     score: number;
     quality: DayQuality;
 }
+export interface OnboardingProfile {
+    firstName: string;
+    birthDate: string | null;
+    timezone: string;
+    language: string;
+}
+export interface OnboardingSetup {
+    motivations: string[];
+    lifeAreas: string[];
+    communicationStyle: CommunicationStyle;
+    criticismLevel: number;
+    wakeTime: string;
+    sleepTime: string;
+    yearlyGoals: string[];
+    buildHabits: string[];
+    quitHabits: string[];
+}
+export interface OnboardingState {
+    status: OnboardingStatus;
+    profile: OnboardingProfile | null;
+    setup: OnboardingSetup | null;
+    completedAt: string | null;
+    firstDayFlowCompleted: boolean;
+    firstDayFlowCompletedAt: string | null;
+}
 export declare const loginSchema: z.ZodObject<{
     email: z.ZodEmail;
     password: z.ZodString;
@@ -215,6 +250,28 @@ export declare const idParamsSchema: z.ZodObject<{
 export declare const habitIdParamsSchema: z.ZodObject<{
     habitId: z.ZodString;
 }, z.core.$strip>;
+export declare const onboardingProfileSchema: z.ZodObject<{
+    firstName: z.ZodString;
+    birthDate: z.ZodNullable<z.ZodISODate>;
+    timezone: z.ZodString;
+    language: z.ZodString;
+}, z.core.$strip>;
+export declare const onboardingSetupSchema: z.ZodObject<{
+    motivations: z.ZodArray<z.ZodString>;
+    lifeAreas: z.ZodArray<z.ZodString>;
+    communicationStyle: z.ZodEnum<{
+        careful: "careful";
+        friendly: "friendly";
+        mentor: "mentor";
+        coach: "coach";
+    }>;
+    criticismLevel: z.ZodNumber;
+    wakeTime: z.ZodString;
+    sleepTime: z.ZodString;
+    yearlyGoals: z.ZodArray<z.ZodString>;
+    buildHabits: z.ZodArray<z.ZodString>;
+    quitHabits: z.ZodArray<z.ZodString>;
+}, z.core.$strip>;
 export type LoginPayload = z.input<typeof loginSchema>;
 export type RegisterPayload = z.input<typeof registerSchema>;
 export type CreateGoalPayload = z.input<typeof createGoalSchema>;
@@ -224,3 +281,5 @@ export type JournalQuery = z.input<typeof journalQuerySchema>;
 export type CreateJournalEntryPayload = z.input<typeof createJournalEntrySchema>;
 export type SaveMorningCheckinPayload = z.input<typeof saveMorningCheckinSchema>;
 export type SaveEveningReflectionPayload = z.input<typeof saveEveningReflectionSchema>;
+export type SaveOnboardingProfilePayload = z.input<typeof onboardingProfileSchema>;
+export type SaveOnboardingSetupPayload = z.input<typeof onboardingSetupSchema>;

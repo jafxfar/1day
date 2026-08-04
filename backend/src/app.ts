@@ -10,6 +10,7 @@ import { createHabitsRouter } from './modules/habits/habits.routes.js'
 import { createJournalRouter } from './modules/journal/journal.routes.js'
 import { createCheckinsRouter } from './modules/checkins/checkins.routes.js'
 import { createBiographyRouter } from './modules/biography/biography.routes.js'
+import { createOnboardingRouter } from './modules/onboarding/onboarding.routes.js'
 
 export interface AppDependencies {
   database: Database
@@ -50,6 +51,7 @@ export const createApp = (config: AppConfig, dependencies: AppDependencies) => {
   app.use('/api/journal', createJournalRouter(dependencies.database, auth.requireAuth))
   app.use('/api/checkins', createCheckinsRouter(dependencies.database, auth.requireAuth))
   app.use('/api/biography', createBiographyRouter(dependencies.database, auth.requireAuth))
+  app.use('/api/onboarding', createOnboardingRouter(dependencies.database, auth.requireAuth))
 
   app.use(notFoundHandler)
   app.use(errorHandler)

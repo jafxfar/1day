@@ -1,4 +1,3 @@
-
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useSession } from '../entities/auth/model/useSession'
@@ -23,7 +22,7 @@ const getMoodIcon = (moodVal: number) => {
   }
 }
 
-function getGreeting() {
+const getGreeting = () => {
   const h = new Date().getHours()
   if (h < 12) return 'Good morning'
   if (h < 17) return 'Good afternoon'
@@ -42,6 +41,12 @@ export default function Dashboard() {
   const { trigger: toggleHabitFn } = useToggleHabit()
 
   useEffect(() => {
+    if (!isLoadingCheckins && !hasCompletedMorning) {
+      navigate('/morning', { replace: true })
+    }
+  }, [hasCompletedMorning, isLoadingCheckins, navigate])
+
+  useEffect(() => {
     void fetchGoals()
     void fetchHabits()
     void fetchJournal()
@@ -53,6 +58,7 @@ export default function Dashboard() {
     : 0
   const latestEntry = entries[0] ?? null
   const topStreak = habits.reduce((max, h) => Math.max(max, h.currentStreak), 0)
+  const nextHabit = habits.find(h => !h.completedToday) ?? null
 
   const handleToggle = async (id: string) => {
     const previousHabits = habits
@@ -76,11 +82,20 @@ export default function Dashboard() {
     setHabits(previousHabits)
   }
 
+  if (isLoadingCheckins || !hasCompletedMorning) {
+    return (
+      <Layout>
+        <main className="app-page px-4 pb-6 pt-8">
+          <p className="text-sm text-muted-foreground">Preparing your day…</p>
+        </main>
+      </Layout>
+    )
+  }
+
   return (
     <Layout>
-      <main className="app-page space-y-7 px-4 pb-6 pt-8">
+      <main className="app-page space-y-6 px-4 pb-6 pt-8">
 
-        {/* ── Header ── */}
         <header className="app-header flex items-start justify-between gap-4">
           <div>
             <p className="text-xs font-medium tracking-wide text-muted-foreground">
@@ -91,6 +106,7 @@ export default function Dashboard() {
             </h1>
           </div>
           <button
+            type="button"
             className="icon-button pressable relative grid size-11 shrink-0 place-items-center rounded-2xl bg-card text-muted-foreground transition-colors hover:text-foreground"
             onClick={() => navigate('/profile')}
             aria-label="Open profile and notifications"
@@ -100,100 +116,167 @@ export default function Dashboard() {
           </button>
         </header>
 
-        {/* ── Morning CTA ── */}
-        {!hasCompletedMorning && !isLoadingCheckins && (
-          <button
-            onClick={() => navigate('/morning')}
-            className="lime-panel pressable flex w-full items-center justify-between rounded-[24px] bg-primary px-5 py-4 text-primary-foreground transition-transform active:scale-[0.98]"
-          >
-            <div className="flex items-center gap-3">
-              <Sun className="w-5 h-5" />
-              <div className="text-left">
-                <p className="font-semibold text-sm">Start morning check-in</p>
-                <p className="text-xs opacity-80">Set your intention for today</p>
-              </div>
-            </div>
-            <ChevronRight className="w-4 h-4 opacity-70" />
-          </button>
-        )}
-
-        {/* ── Morning Stats (after checkin) ── */}
-        {hasCompletedMorning && morningCheckin && (
-          <>
-            <div className="grid grid-cols-[1.2fr_0.8fr] gap-2">
+        {/* 30s signals: how I feel → what's main → what next */}
+        {morningCheckin && (
+          <section className="space-y-3" aria-label="Today at a glance">
+            <div className="grid grid-cols-3 gap-2">
               {[
                 { icon: Moon, label: 'Sleep', value: `${morningCheckin.sleepHours}h` },
                 { icon: Zap, label: 'Energy', value: `${morningCheckin.energy}/10` },
                 { icon: Sun, label: 'Mood', value: getMoodIcon(morningCheckin.mood) },
               ].map(({ icon: Icon, label, value }) => (
-                <div key={label} className="surface-dark rounded-[24px] bg-card p-4 text-left last:col-span-2">
-                  <Icon className="w-4 h-4 text-muted-foreground mx-auto mb-1" />
-                  <div className="flex min-h-[1.5rem] items-center justify-center text-2xl font-bold leading-none tracking-tight text-foreground">{value}</div>
-                  <p className="text-[10px] text-muted-foreground mt-1">{label}</p>
+                <div key={label} className="surface-dark rounded-[20px] bg-card p-3 text-center">
+                  <Icon className="mx-auto mb-1 h-4 w-4 text-muted-foreground" />
+                  <div className="flex min-h-[1.5rem] items-center justify-center text-xl font-bold leading-none tracking-tight text-foreground">{value}</div>
+                  <p className="mt-1 text-[10px] text-muted-foreground">{label}</p>
                 </div>
               ))}
             </div>
+
             <div className="surface-paper rounded-[24px] bg-foreground px-5 py-4 text-background">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1 flex items-center gap-1">
-                Today's focus <Target className="w-3.5 h-3.5 text-primary" />
+              <p className="mb-1 flex items-center gap-1 text-[10px] uppercase tracking-wider text-muted-foreground">
+                Today's focus <Target className="h-3.5 w-3.5 text-primary" />
               </p>
               <p className="text-base font-semibold leading-snug text-background">{morningCheckin.focusText}</p>
             </div>
-          </>
+
+            {nextHabit ? (
+              <button
+                type="button"
+                onClick={() => void handleToggle(nextHabit.id)}
+                className="lime-panel pressable flex w-full items-center gap-3 rounded-[24px] bg-primary px-5 py-4 text-left text-primary-foreground transition-transform active:scale-[0.98]"
+                aria-label={`Mark complete: ${nextHabit.title}`}
+              >
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-full border-2 border-primary-foreground/40">
+                  {getHabitIcon(nextHabit.icon, 'w-4 h-4')}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] opacity-80">Do next</p>
+                  <p className="truncate text-sm font-bold">{nextHabit.title}</p>
+                </div>
+                <span className="text-xs font-semibold opacity-80">Tap to done</span>
+              </button>
+            ) : habits.length > 0 ? (
+              <div className="lime-panel rounded-[24px] bg-primary px-5 py-4 text-primary-foreground">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] opacity-80">Do next</p>
+                <p className="text-sm font-bold">All habits done for today</p>
+              </div>
+            ) : null}
+          </section>
         )}
 
-        {/* ── Stats cards ── */}
+        {/* Habits first — daily action */}
+        {habits.length > 0 && (
+          <section>
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="section-title text-lg font-semibold tracking-tight text-foreground">
+                Today's habits
+              </h2>
+              <button
+                type="button"
+                onClick={() => navigate('/habits')}
+                className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+              >
+                See all →
+              </button>
+            </div>
+            <p className="mb-2 text-xs text-muted-foreground">
+              {completedHabits}/{habits.length} done
+            </p>
+            <div className="space-y-2">
+              {habits.slice(0, 4).map(habit => (
+                <div key={habit.id} className="surface-paper flex items-center gap-3 rounded-[18px] bg-foreground px-4 py-3 text-background">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+                    {getHabitIcon(habit.icon, 'w-4 h-4 text-primary')}
+                  </span>
+                  <p className={`flex-1 text-sm font-semibold ${habit.completedToday ? 'line-through text-background/45' : 'text-background'}`}>
+                    {habit.title}
+                  </p>
+                  <span className="flex items-center gap-0.5 text-xs text-muted-foreground">
+                    <Flame className="h-3 w-3 text-orange-400 dark:text-orange-300" />
+                    {habit.currentStreak}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => void handleToggle(habit.id)}
+                    className={`pressable flex size-8 shrink-0 items-center justify-center rounded-full border-2 transition-all ${habit.completedToday
+                      ? 'border-primary bg-primary'
+                      : 'border-background/20 hover:border-primary'
+                      }`}
+                    aria-label={`${habit.completedToday ? 'Mark incomplete' : 'Mark complete'}: ${habit.title}`}
+                  >
+                    {habit.completedToday && <span className="text-xs font-bold leading-none text-white">✓</span>}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
         <section className="grid grid-cols-[1.15fr_0.85fr] gap-2" aria-label="Daily overview">
-          <button onClick={() => navigate('/habits')}
-            className="lime-panel pressable min-h-36 rounded-[28px] bg-primary p-5 text-left text-primary-foreground transition-transform active:scale-[0.98]">
+          <button
+            type="button"
+            onClick={() => navigate('/habits')}
+            className="lime-panel pressable min-h-28 rounded-[28px] bg-primary p-5 text-left text-primary-foreground transition-transform active:scale-[0.98]"
+          >
             <p className="text-xs font-semibold">Habits today</p>
-            <p className="mt-5 text-4xl font-bold tracking-[-0.05em]">
-              {completedHabits}<span className="text-base text-muted-foreground font-normal">/{habits.length}</span>
+            <p className="mt-4 text-3xl font-bold tracking-[-0.05em]">
+              {completedHabits}<span className="text-base font-normal text-muted-foreground">/{habits.length}</span>
             </p>
             <Progress value={habits.length ? (completedHabits / habits.length) * 100 : 0} className="mt-2 h-1.5" />
           </button>
-          <button onClick={() => navigate('/goals')}
-            className="surface-dark pressable self-end rounded-[24px] bg-card p-5 text-left transition-transform active:scale-[0.98]">
+          <button
+            type="button"
+            onClick={() => navigate('/goals')}
+            className="surface-dark pressable self-end rounded-[24px] bg-card p-5 text-left transition-transform active:scale-[0.98]"
+          >
             <p className="text-xs text-muted-foreground">Goals average</p>
             <p className="mt-3 text-3xl font-bold tracking-[-0.04em] text-foreground">
-              {avgGoalProgress}<span className="text-base text-muted-foreground font-normal">%</span>
+              {avgGoalProgress}<span className="text-base font-normal text-muted-foreground">%</span>
             </p>
             <Progress value={avgGoalProgress} className="mt-2 h-1.5" />
           </button>
         </section>
 
-        {/* ── AI Insight ── */}
-        <button onClick={() => navigate('/ai')}
-          className="surface-dark pressable w-full rounded-[28px] bg-card p-5 text-left transition-transform active:scale-[0.99]">
+        <button
+          type="button"
+          onClick={() => navigate('/ai')}
+          className="surface-dark pressable w-full rounded-[28px] bg-card p-5 text-left transition-transform active:scale-[0.99]"
+        >
           <div className="flex items-start gap-3">
-            <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-              <Bot className="w-5 h-5 text-primary" />
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+              <Bot className="h-5 w-5 text-primary" />
             </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between mb-1.5">
+            <div className="min-w-0 flex-1">
+              <div className="mb-1.5 flex items-center justify-between">
                 <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">AI coach</span>
-                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
               </div>
-              <p className="text-sm text-foreground leading-relaxed">
-                {hasCompletedMorning && topStreak > 0
+              <p className="text-sm leading-relaxed text-foreground">
+                {topStreak > 0
                   ? `You're on a ${topStreak}-day streak! Keep the momentum. Focus on "${morningCheckin?.focusText ?? 'your goal'}" today.`
-                  : 'Start your morning check-in to get a personalized AI insight for today.'}
+                  : `Stay with "${morningCheckin?.focusText ?? 'your focus'}" — small steps compound.`}
               </p>
             </div>
           </div>
         </button>
 
-        {/* ── Active Goals ── */}
         {goals.length > 0 && (
-          <div>
-            <div className="flex items-center justify-between mb-3">
+          <section>
+            <div className="mb-3 flex items-center justify-between">
               <h2 className="section-title text-lg font-semibold tracking-tight text-foreground">Active goals</h2>
-              <button onClick={() => navigate('/goals')} className="text-xs text-muted-foreground hover:text-foreground transition-colors">See all →</button>
+              <button
+                type="button"
+                onClick={() => navigate('/goals')}
+                className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+              >
+                See all →
+              </button>
             </div>
             <div className="space-y-2">
               {goals.slice(0, 2).map(goal => (
                 <div key={goal.id} className="surface-paper rounded-[20px] bg-foreground p-4 text-background">
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="mb-2 flex items-center justify-between">
                     <p className="text-sm font-semibold text-background">{goal.title}</p>
                     <Badge variant="secondary" className="text-xs">{goal.progress}%</Badge>
                   </div>
@@ -202,78 +285,53 @@ export default function Dashboard() {
                 </div>
               ))}
             </div>
-          </div>
+          </section>
         )}
 
-        {/* ── Today's Habits ── */}
-        {habits.length > 0 && (
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="section-title text-lg font-semibold tracking-tight text-foreground">Today's habits</h2>
-              <button onClick={() => navigate('/habits')} className="text-xs text-muted-foreground hover:text-foreground transition-colors">See all →</button>
-            </div>
-            <div className="space-y-2">
-              {habits.slice(0, 4).map(habit => {
-                return (
-                  <div key={habit.id} className="surface-paper flex items-center gap-3 rounded-[18px] bg-foreground px-4 py-3 text-background">
-                    <span className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                      {getHabitIcon(habit.icon, 'w-4 h-4 text-primary')}
-                    </span>
-                    <p className={`flex-1 text-sm font-semibold ${habit.completedToday ? 'line-through text-background/45' : 'text-background'}`}>
-                      {habit.title}
-                    </p>
-                    <span className="flex items-center gap-0.5 text-xs text-muted-foreground">
-                      <Flame className="w-3 h-3 text-orange-400 dark:text-orange-300" />
-                      {habit.currentStreak}
-                    </span>
-                    <button
-                      onClick={() => void handleToggle(habit.id)}
-                      className={`pressable flex size-8 shrink-0 items-center justify-center rounded-full border-2 transition-all ${habit.completedToday
-                        ? 'border-primary bg-primary'
-                        : 'border-background/20 hover:border-primary'
-                        }`}
-                      aria-label={`${habit.completedToday ? 'Mark incomplete' : 'Mark complete'}: ${habit.title}`}
-                    >
-                      {habit.completedToday && <span className="text-white text-xs font-bold leading-none">✓</span>}
-                    </button>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* ── Latest Journal ── */}
         {latestEntry && (
-          <div>
-            <div className="flex items-center justify-between mb-3">
+          <section>
+            <div className="mb-3 flex items-center justify-between">
               <h2 className="section-title text-lg font-semibold tracking-tight text-foreground">Latest entry</h2>
-              <button onClick={() => navigate('/journal')} className="text-xs text-muted-foreground hover:text-foreground transition-colors">Journal →</button>
+              <button
+                type="button"
+                onClick={() => navigate('/journal')}
+                className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+              >
+                Journal →
+              </button>
             </div>
-            <button onClick={() => navigate('/journal')}
-              className="surface-dark pressable w-full rounded-[24px] bg-card p-5 text-left transition-transform active:scale-[0.99]">
-              <div className="flex items-center gap-2 mb-1">
+            <button
+              type="button"
+              onClick={() => navigate('/journal')}
+              className="surface-dark pressable w-full rounded-[24px] bg-card p-5 text-left transition-transform active:scale-[0.99]"
+            >
+              <div className="mb-1 flex items-center gap-2">
                 <p className="text-xs text-muted-foreground">{latestEntry.entryDate}</p>
                 <Badge variant="secondary" className="text-xs">Mood {latestEntry.mood}/10</Badge>
               </div>
-              <p className="font-medium text-sm text-foreground">{latestEntry.title}</p>
-              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{latestEntry.content}</p>
+              <p className="text-sm font-medium text-foreground">{latestEntry.title}</p>
+              <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{latestEntry.content}</p>
             </button>
-          </div>
+          </section>
         )}
 
-        {/* ── Quick Actions ── */}
         <section className="grid grid-cols-[0.9fr_1.1fr] gap-2" aria-label="Quick actions">
-          <button onClick={() => navigate('/calendar')}
-            className="surface-dark pressable flex h-28 flex-col justify-between rounded-[24px] bg-card px-4 py-4 text-left transition-transform active:scale-[0.98]">
-            <Calendar className="w-5 h-5 text-muted-foreground" />
+          <button
+            type="button"
+            onClick={() => navigate('/calendar')}
+            className="surface-dark pressable flex h-28 flex-col justify-between rounded-[24px] bg-card px-4 py-4 text-left transition-transform active:scale-[0.98]"
+          >
+            <Calendar className="h-5 w-5 text-muted-foreground" />
             <div>
-              <p className="text-sm font-medium text-foreground mt-1">Calendar</p>
+              <p className="mt-1 text-sm font-medium text-foreground">Calendar</p>
               <p className="text-xs text-muted-foreground">View your timeline</p>
             </div>
           </button>
-          <button onClick={() => navigate('/evening')}
-            className="surface-paper pressable rounded-[28px] bg-foreground px-5 py-4 text-left text-background transition-transform active:scale-[0.98]">
+          <button
+            type="button"
+            onClick={() => navigate('/evening')}
+            className="surface-paper pressable rounded-[28px] bg-foreground px-5 py-4 text-left text-background transition-transform active:scale-[0.98]"
+          >
             <Moon className="h-5 w-5 text-background/60" />
             <p className="mt-3 text-sm font-semibold text-background">Evening</p>
             <p className="text-xs text-background/60">Close your day</p>

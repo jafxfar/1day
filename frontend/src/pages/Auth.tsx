@@ -35,7 +35,7 @@ export default function Auth() {
           throw new Error('First name is required')
         }
         await register({ email, password, firstName, lastName })
-        navigate(redirectPath, { replace: true })
+        navigate('/onboarding/profile', { replace: true })
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
@@ -52,7 +52,7 @@ export default function Auth() {
             <button
               type="button"
               aria-label="Back to welcome"
-              onClick={() => navigate('/welcome')}
+              onClick={() => navigate('/introduction')}
               className="icon-button pressable flex size-11 items-center justify-center rounded-[16px] border border-white/10 text-[#F4F4F0] transition hover:bg-white/5 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D7FF35]"
             >
               <ArrowLeft className="size-5" />
@@ -78,14 +78,14 @@ export default function Auth() {
               </p>
             </div>
 
-            <div className="surface-paper rounded-[28px] bg-[#F4F4F0] p-4 text-[#151515] sm:p-5">
-              <div className="mb-5 grid grid-cols-2 rounded-[16px] bg-[#92928D] p-1" role="tablist" aria-label="Authentication mode">
+            <div className="rounded-[28px] border border-white/10 bg-[#292929] p-4 text-[#F4F4F0] sm:p-5">
+              <div className="mb-5 grid grid-cols-2 rounded-[16px] bg-white/6 p-1" role="tablist" aria-label="Authentication mode">
                 <button
                   type="button"
                   role="tab"
                   aria-selected={isLogin}
-                  className={`pressable rounded-[13px] py-2.5 text-sm font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#151515] ${
-                    isLogin ? 'bg-[#1D1D1D] text-[#F4F4F0]' : 'text-[#151515] hover:text-[#151515]'
+                  className={`pressable rounded-[13px] py-2.5 text-sm font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D7FF35] ${
+                    isLogin ? 'bg-[#1D1D1D] text-[#D7FF35]' : 'text-[#92928D] hover:text-[#F4F4F0]'
                   }`}
                   onClick={() => {
                     setIsLogin(true)
@@ -98,8 +98,8 @@ export default function Auth() {
                   type="button"
                   role="tab"
                   aria-selected={!isLogin}
-                  className={`pressable rounded-[13px] py-2.5 text-sm font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#151515] ${
-                    !isLogin ? 'bg-[#1D1D1D] text-[#F4F4F0]' : 'text-[#151515] hover:text-[#151515]'
+                  className={`pressable rounded-[13px] py-2.5 text-sm font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D7FF35] ${
+                    !isLogin ? 'bg-[#1D1D1D] text-[#D7FF35]' : 'text-[#92928D] hover:text-[#F4F4F0]'
                   }`}
                   onClick={() => {
                     setIsLogin(false)
@@ -111,7 +111,7 @@ export default function Auth() {
               </div>
 
               {error && (
-                <div role="alert" className="mb-4 rounded-[14px] border border-red-800/20 bg-red-100 p-3 text-sm font-medium text-red-800">
+                <div role="alert" className="mb-4 rounded-[14px] border border-red-500/30 bg-red-500/10 p-3 text-sm font-medium text-red-200">
                   {error}
                 </div>
               )}
@@ -131,7 +131,7 @@ export default function Auth() {
                         value={firstName}
                         onChange={e => setFirstName(e.target.value)}
                         disabled={loading}
-                        className="h-12 rounded-[16px] border-[#151515]/15 bg-[#F4F4F0] px-4 text-[#151515] placeholder:text-[#92928D] focus-visible:border-[#151515] focus-visible:ring-[#151515]/20"
+                        className="h-12 rounded-[16px]"
                         required
                       />
                     </div>
@@ -147,7 +147,7 @@ export default function Auth() {
                         value={lastName}
                         onChange={e => setLastName(e.target.value)}
                         disabled={loading}
-                        className="h-12 rounded-[16px] border-[#151515]/15 bg-[#F4F4F0] px-4 text-[#151515] placeholder:text-[#92928D] focus-visible:border-[#151515] focus-visible:ring-[#151515]/20"
+                        className="h-12 rounded-[16px]"
                       />
                     </div>
                   </div>
@@ -165,7 +165,7 @@ export default function Auth() {
                     value={email}
                     onChange={e => setEmail(e.target.value)}
                     disabled={loading}
-                    className="h-12 rounded-[16px] border-[#151515]/15 bg-[#F4F4F0] px-4 text-[#151515] placeholder:text-[#92928D] focus-visible:border-[#151515] focus-visible:ring-[#151515]/20"
+                    className="h-12 rounded-[16px]"
                     required
                   />
                 </div>
@@ -182,14 +182,14 @@ export default function Auth() {
                     value={password}
                     onChange={e => setPassword(e.target.value)}
                     disabled={loading}
-                    className="h-12 rounded-[16px] border-[#151515]/15 bg-[#F4F4F0] px-4 text-[#151515] placeholder:text-[#92928D] focus-visible:border-[#151515] focus-visible:ring-[#151515]/20"
+                    className="h-12 rounded-[16px]"
                     required
                   />
                 </div>
 
                 <Button
                   type="submit"
-                  className="pressable mt-2 h-14 w-full rounded-[18px] bg-[#D7FF35] text-base font-bold text-[#151515] hover:bg-[#D7FF35]/90 active:scale-[0.985] focus-visible:ring-[#151515]/30"
+                  className="pressable mt-2 h-14 w-full rounded-[18px] bg-[#D7FF35] text-base font-bold text-[#151515] hover:bg-[#D7FF35]/90 active:scale-[0.985] focus-visible:ring-[#D7FF35]/60"
                   disabled={loading}
                 >
                   {loading ? (

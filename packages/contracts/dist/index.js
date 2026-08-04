@@ -17,6 +17,14 @@ export const apiRoutes = {
         evening: '/api/checkins/evening',
     },
     biography: '/api/biography',
+    onboarding: {
+        root: '/api/onboarding',
+        profile: '/api/onboarding/profile',
+        setup: '/api/onboarding/setup',
+        complete: '/api/onboarding/complete',
+        skip: '/api/onboarding/skip',
+        firstDayComplete: '/api/onboarding/first-day-complete',
+    },
 };
 export const goalCategories = [
     'health',
@@ -68,7 +76,7 @@ export const journalQuerySchema = z.object({
 });
 export const createJournalEntrySchema = z.object({
     title: z.string().trim().min(1).max(255),
-    content: z.string().trim().min(1).max(50000),
+    content: z.string().trim().min(1).max(200000),
     mood: z.number().min(1).max(10),
     energy: z.number().min(1).max(10),
     tags: z.array(z.string().trim().min(1).max(100)).default([]),
@@ -91,3 +99,22 @@ export const saveEveningReflectionSchema = z.object({
 });
 export const idParamsSchema = z.object({ id: z.string().uuid() });
 export const habitIdParamsSchema = z.object({ habitId: z.string().uuid() });
+const timeRegex = /^([01]\d|2[0-3]):[0-5]\d$/;
+const nonEmptyString = z.string().trim().min(1).max(120);
+export const onboardingProfileSchema = z.object({
+    firstName: z.string().trim().min(1).max(100),
+    birthDate: z.iso.date().nullable(),
+    timezone: z.string().trim().min(1).max(100),
+    language: z.string().trim().min(2).max(20),
+});
+export const onboardingSetupSchema = z.object({
+    motivations: z.array(nonEmptyString).max(8),
+    lifeAreas: z.array(nonEmptyString).max(8),
+    communicationStyle: z.enum(['careful', 'friendly', 'mentor', 'coach']),
+    criticismLevel: z.number().int().min(1).max(5),
+    wakeTime: z.string().regex(timeRegex),
+    sleepTime: z.string().regex(timeRegex),
+    yearlyGoals: z.array(nonEmptyString).max(5),
+    buildHabits: z.array(nonEmptyString).max(10),
+    quitHabits: z.array(nonEmptyString).max(10),
+});

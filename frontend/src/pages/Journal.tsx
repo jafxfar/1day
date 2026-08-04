@@ -1,13 +1,12 @@
-
 import { useEffect, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useCreateJournalEntry, useDeleteJournalEntry, useGetJournalEntries } from '../entities/journal/model/useJournal'
+import { JournalComposeDialog } from '../features/journal/JournalComposeDialog'
+import { sanitizeJournalHtml } from '../features/journal/sanitizeJournalHtml'
 import { Layout } from '../shared/ui/Layout'
 import { PageSkeleton, PageError } from '../shared/ui/PageSkeleton'
 import { Button } from '../shared/ui/button'
-import { Input } from '../shared/ui/input'
-import { Textarea } from '../shared/ui/textarea'
 import { Badge } from '../shared/ui/badge'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../shared/ui/dialog'
 import { Plus, BookOpen, Trash2 } from 'lucide-react'
 
 const getMoodEmoji = (mood: number) => {
@@ -18,42 +17,42 @@ const getMoodEmoji = (mood: number) => {
   return '😕'
 }
 
-const MOOD_EMOJI: Record<number, string> = {
-  1:'😞', 2:'😕', 3:'😐', 4:'🙁', 5:'😶', 6:'🙂', 7:'😊', 8:'😄', 9:'🥰', 10:'🤩',
-}
-
-const TAG_OPTIONS = [
-  'productive','happy','work','growth','rest','challenge',
-  'family','focus','creative','nature','grateful','social','learning','inspired',
-]
-
 export default function Journal() {
+  const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { data: entries = [], setData: setEntries, loading, error, trigger: fetchEntries } = useGetJournalEntries()
   const { trigger: createEntry, loading: creating } = useCreateJournalEntry()
   const { trigger: deleteEntry } = useDeleteJournalEntry()
 
-  const [showCreate,   setShowCreate]   = useState(false)
-  const [title,        setTitle]        = useState('')
-  const [content,      setContent]      = useState('')
-  const [mood,         setMood]         = useState(7)
-  const [selectedTags, setSelectedTags] = useState<string[]>([])
+  const [showCreate, setShowCreate] = useState(false)
 
   useEffect(() => { void fetchEntries() }, [fetchEntries])
 
-  const toggleTag = (tag: string) =>
-    setSelectedTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag])
+  useEffect(() => {
+    if (searchParams.get('compose') === '1') {
+      setShowCreate(true)
+    }
+  }, [searchParams])
 
-  const handleCreate = async () => {
-    if (!title.trim() || !content.trim()) return
-    const newEntry = await createEntry({ title: title.trim(), content: content.trim(), mood, energy: 7, tags: selectedTags })
+  const handleCloseCreate = (open: boolean) => {
+    setShowCreate(open)
+    if (!open && searchParams.get('compose') === '1') {
+      navigate('/journal', { replace: true })
+    }
+  }
+
+  const handleCreate = async (payload: {
+    title: string
+    content: string
+    mood: number
+    energy: number
+    tags: string[]
+  }) => {
+    const newEntry = await createEntry(payload)
     if (newEntry) {
       setEntries(prev => [newEntry, ...(prev ?? [])])
     }
-    setTitle('')
-    setContent('')
-    setMood(7)
-    setSelectedTags([])
-    setShowCreate(false)
+    return newEntry
   }
 
   const handleDelete = async (id: string) => {
@@ -131,6 +130,8 @@ export default function Journal() {
               const entryDate = new Date(`${entry.entryDate}T00:00:00`)
               const day = entryDate.toLocaleDateString('en-US', { day: '2-digit' })
               const month = entryDate.toLocaleDateString('en-US', { month: 'short' })
+              const safeHtml = sanitizeJournalHtml(entry.content)
+              const looksLikeHtml = /<\/?[a-z][\s\S]*>/i.test(entry.content)
 
               return (
                 <article key={entry.id} className="surface-paper rounded-[28px] p-5 text-[#151515] sm:p-7">
@@ -151,7 +152,16 @@ export default function Journal() {
                           <Trash2 className="h-4 w-4" aria-hidden="true" />
                         </button>
                       </div>
-                      <p className="mt-3 max-w-2xl text-sm leading-7 text-[#151515]/70 line-clamp-4">{entry.content}</p>
+                      {looksLikeHtml ? (
+                        <div
+                          className="journal-entry-body mt-3 max-w-2xl text-sm leading-7 text-[#151515]/70"
+                          dangerouslySetInnerHTML={{ __html: safeHtml }}
+                        />
+                      ) : (
+                        <p className="mt-3 max-w-2xl text-sm leading-7 text-[#151515]/70 line-clamp-4">
+                          {entry.content}
+                        </p>
+                      )}
                     </div>
                   </div>
                   <footer className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-[#151515]/10 pt-4">
@@ -174,58 +184,12 @@ export default function Journal() {
         </div>
       </main>
 
-      {/* ── Create Dialog ── */}
-      <Dialog open={showCreate} onOpenChange={setShowCreate}>
-        <DialogContent className="surface-paper max-h-[90vh] max-w-md overflow-y-auto rounded-[28px] border-0 text-[#151515]">
-          <DialogHeader><DialogTitle className="text-2xl font-black tracking-[-0.035em]">New entry</DialogTitle></DialogHeader>
-          <div className="space-y-4 pt-1">
-            <Input aria-label="Journal entry title" placeholder="Title" value={title} onChange={e => setTitle(e.target.value)} className="h-12 rounded-2xl border-[#151515]/15 bg-transparent" />
-            <Textarea
-              aria-label="Journal entry content"
-              placeholder="What's on your mind today?"
-              value={content}
-              onChange={e => setContent(e.target.value)}
-              className="min-h-35 rounded-2xl border-[#151515]/15 bg-transparent"
-            />
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-sm text-[#151515]/65">Mood</p>
-                <span className="text-sm font-bold">{MOOD_EMOJI[mood] ?? '😊'} {mood}/10</span>
-              </div>
-              <input
-                aria-label="Mood rating from 1 to 10"
-                type="range" min={1} max={10} value={mood}
-                onChange={e => setMood(Number(e.target.value))}
-                className="w-full accent-[#151515]"
-              />
-            </div>
-            <div>
-              <p className="mb-2 text-sm text-[#151515]/65">Tags</p>
-              <div className="flex flex-wrap gap-1.5">
-                {TAG_OPTIONS.map(tag => (
-                  <button
-                    key={tag}
-                    type="button"
-                    onClick={() => toggleTag(tag)}
-                    aria-pressed={selectedTags.includes(tag)}
-                    aria-label={`${selectedTags.includes(tag) ? 'Remove' : 'Add'} ${tag} tag`}
-                    className={`text-xs px-3 py-1.5 rounded-full border transition-all ${
-                      selectedTags.includes(tag)
-                        ? 'border-[#151515] bg-[#151515] text-[#F4F4F0] font-medium'
-                        : 'border-[#151515]/20 text-[#151515]/65 hover:border-[#151515]/60'
-                    }`}
-                  >
-                    #{tag}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <Button className="pressable h-12 w-full rounded-2xl bg-[#151515] text-[#F4F4F0] hover:bg-[#292929]" onClick={() => void handleCreate()} disabled={!title.trim() || !content.trim() || creating}>
-              {creating ? 'Saving…' : 'Save entry'}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <JournalComposeDialog
+        open={showCreate}
+        onOpenChange={handleCloseCreate}
+        creating={creating}
+        onCreate={handleCreate}
+      />
     </Layout>
   )
 }

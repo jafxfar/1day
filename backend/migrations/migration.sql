@@ -196,6 +196,52 @@ CREATE TABLE IF NOT EXISTS day_checkins (
 CREATE INDEX IF NOT EXISTS idx_checkins_user_date
   ON day_checkins(user_id, checkin_date DESC);
 
+-- ---------------------------------------------------------------------------
+-- 6. user_onboarding_preferences
+--    Stores first-time onboarding/profile setup progress and answers.
+-- ---------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS user_onboarding_preferences (
+  user_id              INTEGER PRIMARY KEY REFERENCES lifeos_users(id) ON DELETE CASCADE,
+  status               VARCHAR(20) NOT NULL DEFAULT 'in_progress',
+  profile_first_name   TEXT,
+  profile_birth_date   DATE,
+  profile_timezone     TEXT,
+  profile_language     VARCHAR(20),
+  motivations          TEXT[] NOT NULL DEFAULT '{}',
+  life_areas           TEXT[] NOT NULL DEFAULT '{}',
+  communication_style  VARCHAR(20),
+  criticism_level      SMALLINT,
+  wake_time            VARCHAR(5),
+  sleep_time           VARCHAR(5),
+  yearly_goals         TEXT[] NOT NULL DEFAULT '{}',
+  build_habits         TEXT[] NOT NULL DEFAULT '{}',
+  quit_habits          TEXT[] NOT NULL DEFAULT '{}',
+  completed_at         TIMESTAMPTZ,
+  first_day_flow_completed BOOLEAN NOT NULL DEFAULT FALSE,
+  first_day_flow_completed_at TIMESTAMPTZ,
+  created_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+  CONSTRAINT onboarding_status_check CHECK (status IN ('in_progress', 'skipped', 'completed')),
+  CONSTRAINT onboarding_style_check CHECK (
+    communication_style IS NULL OR communication_style IN ('careful', 'friendly', 'mentor', 'coach')
+  ),
+  CONSTRAINT onboarding_criticism_check CHECK (
+    criticism_level IS NULL OR (criticism_level >= 1 AND criticism_level <= 5)
+  ),
+  CONSTRAINT onboarding_time_check CHECK (
+    (wake_time IS NULL OR wake_time ~ '^([01][0-9]|2[0-3]):[0-5][0-9]$')
+    AND (sleep_time IS NULL OR sleep_time ~ '^([01][0-9]|2[0-3]):[0-5][0-9]$')
+  )
+);
+
+ALTER TABLE user_onboarding_preferences
+  ADD COLUMN IF NOT EXISTS first_day_flow_completed BOOLEAN NOT NULL DEFAULT FALSE;
+
+ALTER TABLE user_onboarding_preferences
+  ADD COLUMN IF NOT EXISTS first_day_flow_completed_at TIMESTAMPTZ;
+
 
 -- =============================================================================
 -- Migration complete.
