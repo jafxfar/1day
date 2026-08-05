@@ -5,10 +5,10 @@
   "type": "module",
   "main": "dist/server.js",
   "scripts": {
-    "dev": "tsx watch src/server.ts",
-    "start": "node dist/server.js",
+    "dev": "node api.js && tsx watch src/server.ts",
+    "start": "node api.js && node dist/server.js",
     "migrate": "node dist/scripts/migrate.js",
-    "build": "rimraf dist && tsc -p tsconfig.json",
+    "build": "node api.js && rimraf dist && tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run"

@@ -1,5 +1,10 @@
 import { Router, type RequestHandler } from 'express'
-import { createGoalSchema, idParamsSchema, updateGoalSchema } from '@life-os/contracts'
+import {
+  createGoalSchema,
+  createGoalTreeSchema,
+  idParamsSchema,
+  updateGoalSchema,
+} from '@life-os/contracts'
 import type { Database } from '../../db.js'
 import { asyncHandler } from '../../lib/asyncHandler.js'
 import { validate } from '../../lib/validation.js'
@@ -13,6 +18,7 @@ export const createGoalsRouter = (database: Database, requireAuth: RequestHandle
 
   router.use(requireAuth)
   router.get('/', asyncHandler(controller.list))
+  router.post('/tree', validate('body', createGoalTreeSchema), asyncHandler(controller.createTree))
   router.post('/', validate('body', createGoalSchema), asyncHandler(controller.create))
   router.patch('/:id', validate('params', idParamsSchema), validate('body', updateGoalSchema), asyncHandler(controller.update))
   router.delete('/:id', validate('params', idParamsSchema), asyncHandler(controller.remove))
