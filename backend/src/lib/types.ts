@@ -1,12 +1,22 @@
-
 import type {
   CheckinType,
   GoalCategory,
   HabitType,
-  PeriodType,
+  NodeType,
+  RoutineRecurrence,
+  RoutineTimeSlot,
+  TaskType,
 } from '@life-os/contracts'
 
-export type { CheckinType, GoalCategory, HabitType, PeriodType }
+export type {
+  CheckinType,
+  GoalCategory,
+  HabitType,
+  NodeType,
+  RoutineRecurrence,
+  RoutineTimeSlot,
+  TaskType,
+}
 
 export interface GoalRow {
   id: string
@@ -19,11 +29,13 @@ export interface GoalRow {
   is_completed: boolean
   completed_at: string | null
   parent_id: string | null
-  period_type: PeriodType
+  node_type: NodeType
+  task_type: TaskType | null
   deleted_at: string | null
   created_at: string
   updated_at: string
 }
+
 export interface HabitRow {
   id: string
   user_id: number
@@ -47,6 +59,21 @@ export interface HabitLogRow {
   completed: boolean
   completed_at: string | null
   created_at: string
+}
+
+export interface RoutineRow {
+  id: string
+  user_id: number
+  title: string
+  description: string
+  recurrence: RoutineRecurrence
+  weekdays: number[]
+  time_slot: RoutineTimeSlot
+  time_of_day: string | null
+  is_active: boolean
+  deleted_at: string | null
+  created_at: string
+  updated_at: string
 }
 
 export interface JournalEntryRow {
