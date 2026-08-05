@@ -33,7 +33,7 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto"; -- provides gen_random_uuid()
 
 -- ---------------------------------------------------------------------------
 -- 1. goals
---    Hierarchical goals: long_term → monthly → weekly → daily
+--    Fixed hierarchy: goal → milestone → project → task
 --    parent_id is self-referential (SET NULL on parent delete)
 -- ---------------------------------------------------------------------------
 
@@ -48,16 +48,77 @@ CREATE TABLE IF NOT EXISTS goals (
   is_completed BOOLEAN       NOT NULL DEFAULT FALSE,
   completed_at TIMESTAMPTZ,
   parent_id    UUID          REFERENCES goals(id) ON DELETE SET NULL,
-  period_type  VARCHAR(20)   NOT NULL DEFAULT 'long_term',
+  node_type    VARCHAR(20)   NOT NULL DEFAULT 'goal',
+  task_type    VARCHAR(20),
   deleted_at   TIMESTAMPTZ,
   created_at   TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
   updated_at   TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
 
-  CONSTRAINT goals_progress_range   CHECK (progress >= 0 AND progress <= 100),
-  CONSTRAINT goals_period_type_check CHECK (
-    period_type IN ('long_term', 'monthly', 'weekly', 'daily')
+  CONSTRAINT goals_progress_range CHECK (progress >= 0 AND progress <= 100),
+  CONSTRAINT goals_node_type_check CHECK (
+    node_type IN ('goal', 'milestone', 'project', 'task')
+  ),
+  CONSTRAINT goals_task_type_check CHECK (
+    task_type IS NULL OR task_type IN ('learning', 'research', 'practice', 'review', 'other')
   )
 );
+
+-- Upgrade path: period_type → node_type / task_type
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'goals' AND column_name = 'period_type'
+  ) THEN
+    IF NOT EXISTS (
+      SELECT 1 FROM information_schema.columns
+      WHERE table_schema = 'public' AND table_name = 'goals' AND column_name = 'node_type'
+    ) THEN
+      ALTER TABLE goals ADD COLUMN node_type VARCHAR(20);
+      UPDATE goals SET node_type = CASE period_type
+        WHEN 'long_term' THEN 'goal'
+        WHEN 'monthly' THEN 'milestone'
+        WHEN 'weekly' THEN 'project'
+        WHEN 'daily' THEN 'task'
+        ELSE 'goal'
+      END;
+      ALTER TABLE goals ALTER COLUMN node_type SET DEFAULT 'goal';
+      ALTER TABLE goals ALTER COLUMN node_type SET NOT NULL;
+    END IF;
+
+    ALTER TABLE goals DROP CONSTRAINT IF EXISTS goals_period_type_check;
+    ALTER TABLE goals DROP COLUMN period_type;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'goals' AND column_name = 'task_type'
+  ) THEN
+    ALTER TABLE goals ADD COLUMN task_type VARCHAR(20);
+  END IF;
+
+  UPDATE goals
+  SET task_type = 'other'
+  WHERE node_type = 'task' AND task_type IS NULL;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'goals_node_type_check' AND conrelid = 'goals'::regclass
+  ) THEN
+    ALTER TABLE goals ADD CONSTRAINT goals_node_type_check CHECK (
+      node_type IN ('goal', 'milestone', 'project', 'task')
+    );
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'goals_task_type_check' AND conrelid = 'goals'::regclass
+  ) THEN
+    ALTER TABLE goals ADD CONSTRAINT goals_task_type_check CHECK (
+      task_type IS NULL OR task_type IN ('learning', 'research', 'practice', 'review', 'other')
+    );
+  END IF;
+END $$;
 
 -- Index: fetch active goals for a user (most common query)
 CREATE INDEX IF NOT EXISTS idx_goals_user_active
@@ -68,6 +129,10 @@ CREATE INDEX IF NOT EXISTS idx_goals_user_active
 CREATE INDEX IF NOT EXISTS idx_goals_parent
   ON goals(parent_id)
   WHERE parent_id IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS idx_goals_node_type
+  ON goals(user_id, node_type)
+  WHERE deleted_at IS NULL;
 
 
 -- ---------------------------------------------------------------------------
@@ -243,7 +308,37 @@ ALTER TABLE user_onboarding_preferences
   ADD COLUMN IF NOT EXISTS first_day_flow_completed_at TIMESTAMPTZ;
 
 
+-- ---------------------------------------------------------------------------
+-- 7. routines
+--    Recurring daily/weekly tasks separate from goal trees and habits.
+-- ---------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS routines (
+  id           UUID          PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id      INTEGER       NOT NULL,
+  title        TEXT          NOT NULL,
+  description  TEXT          NOT NULL DEFAULT '',
+  recurrence   VARCHAR(20)   NOT NULL DEFAULT 'daily',
+  weekdays     SMALLINT[]    NOT NULL DEFAULT '{}',
+  time_slot    VARCHAR(20)   NOT NULL DEFAULT 'anytime',
+  time_of_day  TIME,
+  is_active    BOOLEAN       NOT NULL DEFAULT TRUE,
+  deleted_at   TIMESTAMPTZ,
+  created_at   TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+  updated_at   TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+
+  CONSTRAINT routines_recurrence_check CHECK (recurrence IN ('daily', 'weekly')),
+  CONSTRAINT routines_time_slot_check CHECK (
+    time_slot IN ('morning', 'afternoon', 'evening', 'anytime')
+  )
+);
+
+CREATE INDEX IF NOT EXISTS idx_routines_user_active
+  ON routines(user_id, created_at ASC)
+  WHERE deleted_at IS NULL;
+
+
 -- =============================================================================
 -- Migration complete.
--- Tables created: goals, habits, habit_logs, journal_entries, day_checkins
+-- Tables: goals, habits, habit_logs, journal_entries, day_checkins, routines
 -- =============================================================================

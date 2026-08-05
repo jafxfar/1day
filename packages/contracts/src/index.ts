@@ -10,7 +10,9 @@ export const apiRoutes = {
     me: '/api/auth/me',
   },
   goals: '/api/goals',
+  goalsTree: '/api/goals/tree',
   habits: '/api/habits',
+  routines: '/api/routines',
   journal: '/api/journal',
   checkins: {
     today: '/api/checkins/today',
@@ -37,15 +39,34 @@ export const goalCategories = [
   'personal',
 ] as const
 
-export const periodTypes = ['long_term', 'monthly', 'weekly', 'daily'] as const
+export const nodeTypes = ['goal', 'milestone', 'project', 'task'] as const
+export const taskTypes = ['learning', 'research', 'practice', 'review', 'other'] as const
 export const habitTypes = ['positive', 'negative'] as const
+export const routineRecurrences = ['daily', 'weekly'] as const
+export const routineTimeSlots = ['morning', 'afternoon', 'evening', 'anytime'] as const
 
 export type GoalCategory = typeof goalCategories[number]
-export type PeriodType = typeof periodTypes[number]
+export type NodeType = typeof nodeTypes[number]
+export type TaskType = typeof taskTypes[number]
 export type HabitType = typeof habitTypes[number]
+export type RoutineRecurrence = typeof routineRecurrences[number]
+export type RoutineTimeSlot = typeof routineTimeSlots[number]
 export type CheckinType = 'morning' | 'evening'
 export type OnboardingStatus = 'in_progress' | 'skipped' | 'completed'
 export type CommunicationStyle = 'careful' | 'friendly' | 'mentor' | 'coach'
+
+export const childNodeTypeByParent: Record<NodeType, NodeType | null> = {
+  goal: 'milestone',
+  milestone: 'project',
+  project: 'task',
+  task: null,
+}
+
+export const requiredParentNodeType: Record<Exclude<NodeType, 'goal'>, NodeType> = {
+  milestone: 'goal',
+  project: 'milestone',
+  task: 'project',
+}
 
 export interface AuthUser {
   id: number
@@ -71,7 +92,8 @@ export interface Goal {
   isCompleted: boolean
   completedAt: string | null
   parentId: string | null
-  periodType: PeriodType
+  nodeType: NodeType
+  taskType: TaskType | null
   depth: number
   createdAt: string
   updatedAt: string
@@ -88,6 +110,19 @@ export interface Habit {
   completedToday: boolean
   isArchived: boolean
   createdAt: string
+}
+
+export interface Routine {
+  id: string
+  title: string
+  description: string
+  recurrence: RoutineRecurrence
+  weekdays: number[]
+  timeSlot: RoutineTimeSlot
+  timeOfDay: string | null
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
 }
 
 export interface JournalEntry {
@@ -188,6 +223,7 @@ export interface OnboardingState {
 const dateSchema = z.iso.date()
 const optionalDateSchema = dateSchema.optional()
 const nullableDateSchema = dateSchema.nullable()
+const timeOfDaySchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).nullable()
 
 export const loginSchema = z.object({
   email: z.email(),
@@ -203,10 +239,11 @@ export const registerSchema = loginSchema.extend({
 export const createGoalSchema = z.object({
   title: z.string().trim().min(1).max(255),
   description: z.string().trim().max(5000).default(''),
-  category: z.enum(goalCategories),
+  category: z.enum(goalCategories).default('personal'),
   deadline: nullableDateSchema,
   parentId: z.string().uuid().nullable().optional(),
-  periodType: z.enum(periodTypes).optional(),
+  nodeType: z.enum(nodeTypes),
+  taskType: z.enum(taskTypes).nullable().optional(),
 })
 
 export const updateGoalSchema = z.object({
@@ -216,6 +253,36 @@ export const updateGoalSchema = z.object({
   progress: z.number().min(0).max(100).optional(),
   deadline: nullableDateSchema.optional(),
   isCompleted: z.boolean().optional(),
+  taskType: z.enum(taskTypes).nullable().optional(),
+})
+
+const treeTaskSchema = z.object({
+  title: z.string().trim().min(1).max(255),
+  description: z.string().trim().max(5000).default(''),
+  deadline: nullableDateSchema,
+  taskType: z.enum(taskTypes),
+})
+
+const treeProjectSchema = z.object({
+  title: z.string().trim().min(1).max(255),
+  description: z.string().trim().max(5000).default(''),
+  deadline: nullableDateSchema,
+  tasks: z.array(treeTaskSchema).default([]),
+})
+
+const treeMilestoneSchema = z.object({
+  title: z.string().trim().min(1).max(255),
+  description: z.string().trim().max(5000).default(''),
+  deadline: nullableDateSchema,
+  projects: z.array(treeProjectSchema).default([]),
+})
+
+export const createGoalTreeSchema = z.object({
+  title: z.string().trim().min(1).max(255),
+  description: z.string().trim().max(5000).default(''),
+  category: z.enum(goalCategories),
+  deadline: nullableDateSchema,
+  milestones: z.array(treeMilestoneSchema).default([]),
 })
 
 export const createHabitSchema = z.object({
@@ -223,6 +290,42 @@ export const createHabitSchema = z.object({
   type: z.enum(habitTypes),
   icon: z.string().max(100).default('🎯'),
   category: z.string().trim().max(100).default('general'),
+})
+
+export const createRoutineSchema = z.object({
+  title: z.string().trim().min(1).max(255),
+  description: z.string().trim().max(5000).default(''),
+  recurrence: z.enum(routineRecurrences),
+  weekdays: z.array(z.number().int().min(0).max(6)).default([]),
+  timeSlot: z.enum(routineTimeSlots).default('anytime'),
+  timeOfDay: timeOfDaySchema.default(null),
+  isActive: z.boolean().default(true),
+}).superRefine((value, context) => {
+  if (value.recurrence === 'weekly' && value.weekdays.length === 0) {
+    context.addIssue({
+      code: 'custom',
+      path: ['weekdays'],
+      message: 'Pick at least one weekday for weekly routines',
+    })
+  }
+})
+
+export const updateRoutineSchema = z.object({
+  title: z.string().trim().min(1).max(255).optional(),
+  description: z.string().trim().max(5000).optional(),
+  recurrence: z.enum(routineRecurrences).optional(),
+  weekdays: z.array(z.number().int().min(0).max(6)).optional(),
+  timeSlot: z.enum(routineTimeSlots).optional(),
+  timeOfDay: timeOfDaySchema.optional(),
+  isActive: z.boolean().optional(),
+}).superRefine((value, context) => {
+  if (value.recurrence === 'weekly' && value.weekdays !== undefined && value.weekdays.length === 0) {
+    context.addIssue({
+      code: 'custom',
+      path: ['weekdays'],
+      message: 'Pick at least one weekday for weekly routines',
+    })
+  }
 })
 
 export const journalQuerySchema = z.object({
@@ -285,7 +388,10 @@ export type LoginPayload = z.input<typeof loginSchema>
 export type RegisterPayload = z.input<typeof registerSchema>
 export type CreateGoalPayload = z.input<typeof createGoalSchema>
 export type UpdateGoalPayload = z.input<typeof updateGoalSchema>
+export type CreateGoalTreePayload = z.input<typeof createGoalTreeSchema>
 export type CreateHabitPayload = z.input<typeof createHabitSchema>
+export type CreateRoutinePayload = z.input<typeof createRoutineSchema>
+export type UpdateRoutinePayload = z.input<typeof updateRoutineSchema>
 export type JournalQuery = z.input<typeof journalQuerySchema>
 export type CreateJournalEntryPayload = z.input<typeof createJournalEntrySchema>
 export type SaveMorningCheckinPayload = z.input<typeof saveMorningCheckinSchema>

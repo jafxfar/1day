@@ -1,10 +1,14 @@
-
 import type {
-  Goal, Habit, JournalEntry, MorningCheckin, EveningReflection,
+  Goal, Habit, JournalEntry, MorningCheckin, EveningReflection, Routine,
 } from '@life-os/contracts'
 import type {
-  GoalRow, HabitRow, JournalEntryRow, DayCheckinRow,
+  GoalRow, HabitRow, JournalEntryRow, DayCheckinRow, RoutineRow,
 } from './types.js'
+
+const formatTimeOfDay = (value: string | null): string | null => {
+  if (!value) return null
+  return value.slice(0, 5)
+}
 
 export function mapGoal(row: GoalRow & { depth?: number }): Goal {
   return {
@@ -17,7 +21,8 @@ export function mapGoal(row: GoalRow & { depth?: number }): Goal {
     isCompleted: row.is_completed,
     completedAt: row.completed_at,
     parentId:    row.parent_id,
-    periodType:  row.period_type,
+    nodeType:    row.node_type,
+    taskType:    row.task_type,
     depth:       row.depth ?? 0,
     createdAt:   row.created_at,
     updatedAt:   row.updated_at,
@@ -39,6 +44,21 @@ export function mapHabit(
     completedToday,
     isArchived:     row.is_archived,
     createdAt:      row.created_at,
+  }
+}
+
+export function mapRoutine(row: RoutineRow): Routine {
+  return {
+    id:          row.id,
+    title:       row.title,
+    description: row.description,
+    recurrence:  row.recurrence,
+    weekdays:    row.weekdays ?? [],
+    timeSlot:    row.time_slot,
+    timeOfDay:   formatTimeOfDay(row.time_of_day),
+    isActive:    row.is_active,
+    createdAt:   row.created_at,
+    updatedAt:   row.updated_at,
   }
 }
 
