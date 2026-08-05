@@ -9,7 +9,9 @@ export declare const apiRoutes: {
         readonly me: "/api/auth/me";
     };
     readonly goals: "/api/goals";
+    readonly goalsTree: "/api/goals/tree";
     readonly habits: "/api/habits";
+    readonly routines: "/api/routines";
     readonly journal: "/api/journal";
     readonly checkins: {
         readonly today: "/api/checkins/today";
@@ -27,14 +29,22 @@ export declare const apiRoutes: {
     };
 };
 export declare const goalCategories: readonly ["health", "career", "learning", "relationships", "finance", "personal"];
-export declare const periodTypes: readonly ["long_term", "monthly", "weekly", "daily"];
+export declare const nodeTypes: readonly ["goal", "milestone", "project", "task"];
+export declare const taskTypes: readonly ["learning", "research", "practice", "review", "other"];
 export declare const habitTypes: readonly ["positive", "negative"];
+export declare const routineRecurrences: readonly ["daily", "weekly"];
+export declare const routineTimeSlots: readonly ["morning", "afternoon", "evening", "anytime"];
 export type GoalCategory = typeof goalCategories[number];
-export type PeriodType = typeof periodTypes[number];
+export type NodeType = typeof nodeTypes[number];
+export type TaskType = typeof taskTypes[number];
 export type HabitType = typeof habitTypes[number];
+export type RoutineRecurrence = typeof routineRecurrences[number];
+export type RoutineTimeSlot = typeof routineTimeSlots[number];
 export type CheckinType = 'morning' | 'evening';
 export type OnboardingStatus = 'in_progress' | 'skipped' | 'completed';
 export type CommunicationStyle = 'careful' | 'friendly' | 'mentor' | 'coach';
+export declare const childNodeTypeByParent: Record<NodeType, NodeType | null>;
+export declare const requiredParentNodeType: Record<Exclude<NodeType, 'goal'>, NodeType>;
 export interface AuthUser {
     id: number;
     email: string;
@@ -61,7 +71,8 @@ export interface Goal {
     isCompleted: boolean;
     completedAt: string | null;
     parentId: string | null;
-    periodType: PeriodType;
+    nodeType: NodeType;
+    taskType: TaskType | null;
     depth: number;
     createdAt: string;
     updatedAt: string;
@@ -77,6 +88,18 @@ export interface Habit {
     completedToday: boolean;
     isArchived: boolean;
     createdAt: string;
+}
+export interface Routine {
+    id: string;
+    title: string;
+    description: string;
+    recurrence: RoutineRecurrence;
+    weekdays: number[];
+    timeSlot: RoutineTimeSlot;
+    timeOfDay: string | null;
+    isActive: boolean;
+    createdAt: string;
+    updatedAt: string;
 }
 export interface JournalEntry {
     id: string;
@@ -176,22 +199,29 @@ export declare const registerSchema: z.ZodObject<{
 export declare const createGoalSchema: z.ZodObject<{
     title: z.ZodString;
     description: z.ZodDefault<z.ZodString>;
-    category: z.ZodEnum<{
+    category: z.ZodDefault<z.ZodEnum<{
         health: "health";
         career: "career";
         learning: "learning";
         relationships: "relationships";
         finance: "finance";
         personal: "personal";
-    }>;
+    }>>;
     deadline: z.ZodNullable<z.ZodISODate>;
     parentId: z.ZodOptional<z.ZodNullable<z.ZodString>>;
-    periodType: z.ZodOptional<z.ZodEnum<{
-        long_term: "long_term";
-        monthly: "monthly";
-        weekly: "weekly";
-        daily: "daily";
-    }>>;
+    nodeType: z.ZodEnum<{
+        goal: "goal";
+        milestone: "milestone";
+        project: "project";
+        task: "task";
+    }>;
+    taskType: z.ZodOptional<z.ZodNullable<z.ZodEnum<{
+        learning: "learning";
+        research: "research";
+        practice: "practice";
+        review: "review";
+        other: "other";
+    }>>>;
 }, z.core.$strip>;
 export declare const updateGoalSchema: z.ZodObject<{
     title: z.ZodOptional<z.ZodString>;
@@ -207,6 +237,48 @@ export declare const updateGoalSchema: z.ZodObject<{
     progress: z.ZodOptional<z.ZodNumber>;
     deadline: z.ZodOptional<z.ZodNullable<z.ZodISODate>>;
     isCompleted: z.ZodOptional<z.ZodBoolean>;
+    taskType: z.ZodOptional<z.ZodNullable<z.ZodEnum<{
+        learning: "learning";
+        research: "research";
+        practice: "practice";
+        review: "review";
+        other: "other";
+    }>>>;
+}, z.core.$strip>;
+export declare const createGoalTreeSchema: z.ZodObject<{
+    title: z.ZodString;
+    description: z.ZodDefault<z.ZodString>;
+    category: z.ZodEnum<{
+        health: "health";
+        career: "career";
+        learning: "learning";
+        relationships: "relationships";
+        finance: "finance";
+        personal: "personal";
+    }>;
+    deadline: z.ZodNullable<z.ZodISODate>;
+    milestones: z.ZodDefault<z.ZodArray<z.ZodObject<{
+        title: z.ZodString;
+        description: z.ZodDefault<z.ZodString>;
+        deadline: z.ZodNullable<z.ZodISODate>;
+        projects: z.ZodDefault<z.ZodArray<z.ZodObject<{
+            title: z.ZodString;
+            description: z.ZodDefault<z.ZodString>;
+            deadline: z.ZodNullable<z.ZodISODate>;
+            tasks: z.ZodDefault<z.ZodArray<z.ZodObject<{
+                title: z.ZodString;
+                description: z.ZodDefault<z.ZodString>;
+                deadline: z.ZodNullable<z.ZodISODate>;
+                taskType: z.ZodEnum<{
+                    learning: "learning";
+                    research: "research";
+                    practice: "practice";
+                    review: "review";
+                    other: "other";
+                }>;
+            }, z.core.$strip>>>;
+        }, z.core.$strip>>>;
+    }, z.core.$strip>>>;
 }, z.core.$strip>;
 export declare const createHabitSchema: z.ZodObject<{
     title: z.ZodString;
@@ -216,6 +288,40 @@ export declare const createHabitSchema: z.ZodObject<{
     }>;
     icon: z.ZodDefault<z.ZodString>;
     category: z.ZodDefault<z.ZodString>;
+}, z.core.$strip>;
+export declare const createRoutineSchema: z.ZodObject<{
+    title: z.ZodString;
+    description: z.ZodDefault<z.ZodString>;
+    recurrence: z.ZodEnum<{
+        daily: "daily";
+        weekly: "weekly";
+    }>;
+    weekdays: z.ZodDefault<z.ZodArray<z.ZodNumber>>;
+    timeSlot: z.ZodDefault<z.ZodEnum<{
+        morning: "morning";
+        afternoon: "afternoon";
+        evening: "evening";
+        anytime: "anytime";
+    }>>;
+    timeOfDay: z.ZodDefault<z.ZodNullable<z.ZodString>>;
+    isActive: z.ZodDefault<z.ZodBoolean>;
+}, z.core.$strip>;
+export declare const updateRoutineSchema: z.ZodObject<{
+    title: z.ZodOptional<z.ZodString>;
+    description: z.ZodOptional<z.ZodString>;
+    recurrence: z.ZodOptional<z.ZodEnum<{
+        daily: "daily";
+        weekly: "weekly";
+    }>>;
+    weekdays: z.ZodOptional<z.ZodArray<z.ZodNumber>>;
+    timeSlot: z.ZodOptional<z.ZodEnum<{
+        morning: "morning";
+        afternoon: "afternoon";
+        evening: "evening";
+        anytime: "anytime";
+    }>>;
+    timeOfDay: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    isActive: z.ZodOptional<z.ZodBoolean>;
 }, z.core.$strip>;
 export declare const journalQuerySchema: z.ZodObject<{
     limit: z.ZodDefault<z.ZodCoercedNumber<unknown>>;
@@ -276,7 +382,10 @@ export type LoginPayload = z.input<typeof loginSchema>;
 export type RegisterPayload = z.input<typeof registerSchema>;
 export type CreateGoalPayload = z.input<typeof createGoalSchema>;
 export type UpdateGoalPayload = z.input<typeof updateGoalSchema>;
+export type CreateGoalTreePayload = z.input<typeof createGoalTreeSchema>;
 export type CreateHabitPayload = z.input<typeof createHabitSchema>;
+export type CreateRoutinePayload = z.input<typeof createRoutineSchema>;
+export type UpdateRoutinePayload = z.input<typeof updateRoutineSchema>;
 export type JournalQuery = z.input<typeof journalQuerySchema>;
 export type CreateJournalEntryPayload = z.input<typeof createJournalEntrySchema>;
 export type SaveMorningCheckinPayload = z.input<typeof saveMorningCheckinSchema>;

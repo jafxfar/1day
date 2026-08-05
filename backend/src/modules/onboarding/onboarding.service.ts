@@ -107,7 +107,8 @@ const importSetupEntities = async (
       category: 'personal',
       deadline: null,
       parentId: null,
-      periodType: 'long_term',
+      nodeType: 'goal',
+      taskType: null,
     })
     existingGoalTitles.add(normalizeTitle(trimmed))
   }

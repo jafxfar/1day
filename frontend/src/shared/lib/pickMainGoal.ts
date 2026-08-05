@@ -1,10 +1,10 @@
-import type { Goal, PeriodType } from '@life-os/contracts'
+import type { Goal, NodeType } from '@life-os/contracts'
 
-const periodPriority: Record<PeriodType, number> = {
-  weekly: 0,
-  monthly: 1,
-  long_term: 2,
-  daily: 3,
+const nodePriority: Record<NodeType, number> = {
+  goal: 0,
+  milestone: 1,
+  project: 2,
+  task: 3,
 }
 
 export const FALLBACK_FOCUS_SUGGESTIONS = [
@@ -26,21 +26,24 @@ const getDaysUntilDeadline = (deadline: string | null) => {
 }
 
 export const pickMainGoal = (goals: Goal[]): Goal | null => {
-  const activeGoals = goals.filter(goal => !goal.isCompleted)
-  if (activeGoals.length === 0) {
-    return null
+  const activeRoots = goals.filter(goal => !goal.isCompleted && goal.nodeType === 'goal')
+  if (activeRoots.length > 0) {
+    return [...activeRoots].sort((left, right) => {
+      const leftDays = getDaysUntilDeadline(left.deadline)
+      const rightDays = getDaysUntilDeadline(right.deadline)
+      if (leftDays !== rightDays) return leftDays - rightDays
+      if (left.progress !== right.progress) return left.progress - right.progress
+      return new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime()
+    })[0] ?? null
   }
 
-  return [...activeGoals].sort((left, right) => {
-    const periodDiff = periodPriority[left.periodType] - periodPriority[right.periodType]
-    if (periodDiff !== 0) return periodDiff
+  const activeNodes = goals.filter(goal => !goal.isCompleted)
+  if (activeNodes.length === 0) return null
 
-    const leftDays = getDaysUntilDeadline(left.deadline)
-    const rightDays = getDaysUntilDeadline(right.deadline)
-    if (leftDays !== rightDays) return leftDays - rightDays
-
-    if (left.progress !== right.progress) return left.progress - right.progress
-    return new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime()
+  return [...activeNodes].sort((left, right) => {
+    const typeDiff = nodePriority[left.nodeType] - nodePriority[right.nodeType]
+    if (typeDiff !== 0) return typeDiff
+    return getDaysUntilDeadline(left.deadline) - getDaysUntilDeadline(right.deadline)
   })[0] ?? null
 }
 
@@ -56,12 +59,11 @@ export const buildFocusSuggestions = (goal: Goal | null): string[] => {
   ]
 }
 
-const PERIOD_LABELS: Record<PeriodType, string> = {
-  weekly: 'неделю',
-  monthly: 'месяц',
-  long_term: 'год',
-  daily: 'день',
+const NODE_LABELS: Record<NodeType, string> = {
+  goal: 'цель',
+  milestone: 'milestone',
+  project: 'проект',
+  task: 'задачу',
 }
 
-export const getGoalPeriodLabel = (periodType: PeriodType): string =>
-  PERIOD_LABELS[periodType]
+export const getGoalNodeLabel = (nodeType: NodeType): string => NODE_LABELS[nodeType]
