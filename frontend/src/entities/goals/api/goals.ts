@@ -1,6 +1,7 @@
 import {
   apiRoutes,
   type CreateGoalPayload,
+  type CreateGoalTreePayload,
   type Goal,
   type UpdateGoalPayload as GoalUpdate,
 } from '@life-os/contracts'
@@ -20,6 +21,10 @@ type DeleteGoalResponse = {
 export const goalsApi = {
   getAll: () => request<Goal[]>(apiRoutes.goals),
   create: (payload: CreateGoalPayload) => request<Goal>(apiRoutes.goals, {
+    method: 'POST',
+    body: payload,
+  }),
+  createTree: (payload: CreateGoalTreePayload) => request<Goal[]>(apiRoutes.goalsTree, {
     method: 'POST',
     body: payload,
   }),

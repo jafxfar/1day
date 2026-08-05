@@ -1,5 +1,9 @@
 import type { RequestHandler } from 'express'
-import type { CreateGoalPayload, UpdateGoalPayload } from '@life-os/contracts'
+import type {
+  CreateGoalPayload,
+  CreateGoalTreePayload,
+  UpdateGoalPayload,
+} from '@life-os/contracts'
 import type { AuthenticatedRequest } from '../../lib/auth.js'
 import type { GoalsService } from './goals.service.js'
 
@@ -11,6 +15,12 @@ export const createGoalsController = (service: GoalsService) => {
     response.status(201).json(await service.create(
       (request as AuthenticatedRequest).user.id,
       request.body as CreateGoalPayload,
+    ))
+  }
+  const createTree: RequestHandler = async (request, response) => {
+    response.status(201).json(await service.createTree(
+      (request as AuthenticatedRequest).user.id,
+      request.body as CreateGoalTreePayload,
     ))
   }
   const update: RequestHandler = async (request, response) => {
@@ -26,5 +36,5 @@ export const createGoalsController = (service: GoalsService) => {
       (request as AuthenticatedRequest).user.id,
     ))
   }
-  return { list, create, update, remove }
+  return { list, create, createTree, update, remove }
 }
