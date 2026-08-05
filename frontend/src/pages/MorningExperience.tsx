@@ -8,7 +8,7 @@ import { useSaveMorningCheckin } from '../entities/checkins/model/useCheckins'
 import { useGetGoals } from '../entities/goals/model/useGoals'
 import {
   buildFocusSuggestions,
-  getGoalPeriodLabel,
+  getGoalNodeLabel,
   pickMainGoal,
 } from '../shared/lib/pickMainGoal'
 import {
@@ -162,7 +162,7 @@ export default function MorningExperience() {
 
               {recommendedGoal && (
                 <p className="mb-3 text-xs leading-5 text-[#92928D]">
-                  From your {getGoalPeriodLabel(recommendedGoal.periodType)} goal: {recommendedGoal.title}
+                  From your {getGoalNodeLabel(recommendedGoal.nodeType)}: {recommendedGoal.title}
                 </p>
               )}
 

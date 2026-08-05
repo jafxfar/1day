@@ -9,7 +9,9 @@ export const apiRoutes = {
         me: '/api/auth/me',
     },
     goals: '/api/goals',
+    goalsTree: '/api/goals/tree',
     habits: '/api/habits',
+    routines: '/api/routines',
     journal: '/api/journal',
     checkins: {
         today: '/api/checkins/today',
@@ -34,11 +36,26 @@ export const goalCategories = [
     'finance',
     'personal',
 ];
-export const periodTypes = ['long_term', 'monthly', 'weekly', 'daily'];
+export const nodeTypes = ['goal', 'milestone', 'project', 'task'];
+export const taskTypes = ['learning', 'research', 'practice', 'review', 'other'];
 export const habitTypes = ['positive', 'negative'];
+export const routineRecurrences = ['daily', 'weekly'];
+export const routineTimeSlots = ['morning', 'afternoon', 'evening', 'anytime'];
+export const childNodeTypeByParent = {
+    goal: 'milestone',
+    milestone: 'project',
+    project: 'task',
+    task: null,
+};
+export const requiredParentNodeType = {
+    milestone: 'goal',
+    project: 'milestone',
+    task: 'project',
+};
 const dateSchema = z.iso.date();
 const optionalDateSchema = dateSchema.optional();
 const nullableDateSchema = dateSchema.nullable();
+const timeOfDaySchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).nullable();
 export const loginSchema = z.object({
     email: z.email(),
     password: z.string().min(1).max(128),
@@ -51,10 +68,11 @@ export const registerSchema = loginSchema.extend({
 export const createGoalSchema = z.object({
     title: z.string().trim().min(1).max(255),
     description: z.string().trim().max(5000).default(''),
-    category: z.enum(goalCategories),
+    category: z.enum(goalCategories).default('personal'),
     deadline: nullableDateSchema,
     parentId: z.string().uuid().nullable().optional(),
-    periodType: z.enum(periodTypes).optional(),
+    nodeType: z.enum(nodeTypes),
+    taskType: z.enum(taskTypes).nullable().optional(),
 });
 export const updateGoalSchema = z.object({
     title: z.string().trim().min(1).max(255).optional(),
@@ -63,12 +81,72 @@ export const updateGoalSchema = z.object({
     progress: z.number().min(0).max(100).optional(),
     deadline: nullableDateSchema.optional(),
     isCompleted: z.boolean().optional(),
+    taskType: z.enum(taskTypes).nullable().optional(),
+});
+const treeTaskSchema = z.object({
+    title: z.string().trim().min(1).max(255),
+    description: z.string().trim().max(5000).default(''),
+    deadline: nullableDateSchema,
+    taskType: z.enum(taskTypes),
+});
+const treeProjectSchema = z.object({
+    title: z.string().trim().min(1).max(255),
+    description: z.string().trim().max(5000).default(''),
+    deadline: nullableDateSchema,
+    tasks: z.array(treeTaskSchema).default([]),
+});
+const treeMilestoneSchema = z.object({
+    title: z.string().trim().min(1).max(255),
+    description: z.string().trim().max(5000).default(''),
+    deadline: nullableDateSchema,
+    projects: z.array(treeProjectSchema).default([]),
+});
+export const createGoalTreeSchema = z.object({
+    title: z.string().trim().min(1).max(255),
+    description: z.string().trim().max(5000).default(''),
+    category: z.enum(goalCategories),
+    deadline: nullableDateSchema,
+    milestones: z.array(treeMilestoneSchema).default([]),
 });
 export const createHabitSchema = z.object({
     title: z.string().trim().min(1).max(255),
     type: z.enum(habitTypes),
     icon: z.string().max(100).default('🎯'),
     category: z.string().trim().max(100).default('general'),
+});
+export const createRoutineSchema = z.object({
+    title: z.string().trim().min(1).max(255),
+    description: z.string().trim().max(5000).default(''),
+    recurrence: z.enum(routineRecurrences),
+    weekdays: z.array(z.number().int().min(0).max(6)).default([]),
+    timeSlot: z.enum(routineTimeSlots).default('anytime'),
+    timeOfDay: timeOfDaySchema.default(null),
+    isActive: z.boolean().default(true),
+}).superRefine((value, context) => {
+    if (value.recurrence === 'weekly' && value.weekdays.length === 0) {
+        context.addIssue({
+            code: 'custom',
+            path: ['weekdays'],
+            message: 'Pick at least one weekday for weekly routines',
+        });
+    }
+});
+export const updateRoutineSchema = z.object({
+    title: z.string().trim().min(1).max(255).optional(),
+    description: z.string().trim().max(5000).optional(),
+    recurrence: z.enum(routineRecurrences).optional(),
+    weekdays: z.array(z.number().int().min(0).max(6)).optional(),
+    timeSlot: z.enum(routineTimeSlots).optional(),
+    timeOfDay: timeOfDaySchema.optional(),
+    isActive: z.boolean().optional(),
+}).superRefine((value, context) => {
+    if (value.recurrence === 'weekly' && value.weekdays !== undefined && value.weekdays.length === 0) {
+        context.addIssue({
+            code: 'custom',
+            path: ['weekdays'],
+            message: 'Pick at least one weekday for weekly routines',
+        });
+    }
 });
 export const journalQuerySchema = z.object({
     limit: z.coerce.number().int().min(1).max(200).default(50),
