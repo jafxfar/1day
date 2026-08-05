@@ -12,7 +12,7 @@ import { ChevronRight, Target, CheckSquare2, BookOpen, Flame, Bot, Bell, Moon, L
 const MVP_CHECKLIST = [
   { label: 'Morning Experience', done: true },
   { label: 'Dashboard', done: true },
-  { label: 'Goals (CRUD + DB)', done: true },
+  { label: 'Goals (tree + routines)', done: true },
   { label: 'Habits + Streaks', done: true },
   { label: 'Journal', done: true },
   { label: 'Calendar', done: true },
