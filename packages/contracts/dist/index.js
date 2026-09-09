@@ -27,6 +27,11 @@ export const apiRoutes = {
         skip: '/api/onboarding/skip',
         firstDayComplete: '/api/onboarding/first-day-complete',
     },
+    ai: {
+        health: '/api/ai/health',
+        psychologistSession: '/api/ai/psychologist/session',
+        psychologistMessages: '/api/ai/psychologist/messages',
+    },
 };
 export const goalCategories = [
     'health',
@@ -36,21 +41,17 @@ export const goalCategories = [
     'finance',
     'personal',
 ];
-export const nodeTypes = ['goal', 'milestone', 'project', 'task'];
+export const nodeTypes = ['goal', 'task'];
 export const taskTypes = ['learning', 'research', 'practice', 'review', 'other'];
 export const habitTypes = ['positive', 'negative'];
 export const routineRecurrences = ['daily', 'weekly'];
 export const routineTimeSlots = ['morning', 'afternoon', 'evening', 'anytime'];
 export const childNodeTypeByParent = {
-    goal: 'milestone',
-    milestone: 'project',
-    project: 'task',
+    goal: 'task',
     task: null,
 };
 export const requiredParentNodeType = {
-    milestone: 'goal',
-    project: 'milestone',
-    task: 'project',
+    task: 'goal',
 };
 const dateSchema = z.iso.date();
 const optionalDateSchema = dateSchema.optional();
@@ -83,30 +84,18 @@ export const updateGoalSchema = z.object({
     isCompleted: z.boolean().optional(),
     taskType: z.enum(taskTypes).nullable().optional(),
 });
-const treeTaskSchema = z.object({
+const treeStepSchema = z.object({
     title: z.string().trim().min(1).max(255),
     description: z.string().trim().max(5000).default(''),
     deadline: nullableDateSchema,
-    taskType: z.enum(taskTypes),
-});
-const treeProjectSchema = z.object({
-    title: z.string().trim().min(1).max(255),
-    description: z.string().trim().max(5000).default(''),
-    deadline: nullableDateSchema,
-    tasks: z.array(treeTaskSchema).default([]),
-});
-const treeMilestoneSchema = z.object({
-    title: z.string().trim().min(1).max(255),
-    description: z.string().trim().max(5000).default(''),
-    deadline: nullableDateSchema,
-    projects: z.array(treeProjectSchema).default([]),
+    taskType: z.enum(taskTypes).default('other'),
 });
 export const createGoalTreeSchema = z.object({
     title: z.string().trim().min(1).max(255),
     description: z.string().trim().max(5000).default(''),
     category: z.enum(goalCategories),
     deadline: nullableDateSchema,
-    milestones: z.array(treeMilestoneSchema).default([]),
+    steps: z.array(treeStepSchema).default([]),
 });
 export const createHabitSchema = z.object({
     title: z.string().trim().min(1).max(255),
@@ -195,4 +184,7 @@ export const onboardingSetupSchema = z.object({
     yearlyGoals: z.array(nonEmptyString).max(5),
     buildHabits: z.array(nonEmptyString).max(10),
     quitHabits: z.array(nonEmptyString).max(10),
+});
+export const sendAiMessageSchema = z.object({
+    content: z.string().trim().min(1).max(8000),
 });

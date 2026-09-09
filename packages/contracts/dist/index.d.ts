@@ -27,9 +27,14 @@ export declare const apiRoutes: {
         readonly skip: "/api/onboarding/skip";
         readonly firstDayComplete: "/api/onboarding/first-day-complete";
     };
+    readonly ai: {
+        readonly health: "/api/ai/health";
+        readonly psychologistSession: "/api/ai/psychologist/session";
+        readonly psychologistMessages: "/api/ai/psychologist/messages";
+    };
 };
 export declare const goalCategories: readonly ["health", "career", "learning", "relationships", "finance", "personal"];
-export declare const nodeTypes: readonly ["goal", "milestone", "project", "task"];
+export declare const nodeTypes: readonly ["goal", "task"];
 export declare const taskTypes: readonly ["learning", "research", "practice", "review", "other"];
 export declare const habitTypes: readonly ["positive", "negative"];
 export declare const routineRecurrences: readonly ["daily", "weekly"];
@@ -43,6 +48,8 @@ export type RoutineTimeSlot = typeof routineTimeSlots[number];
 export type CheckinType = 'morning' | 'evening';
 export type OnboardingStatus = 'in_progress' | 'skipped' | 'completed';
 export type CommunicationStyle = 'careful' | 'friendly' | 'mentor' | 'coach';
+export type AiChatRole = 'user' | 'assistant';
+export type AiSessionKind = 'psychologist';
 export declare const childNodeTypeByParent: Record<NodeType, NodeType | null>;
 export declare const requiredParentNodeType: Record<Exclude<NodeType, 'goal'>, NodeType>;
 export interface AuthUser {
@@ -60,6 +67,10 @@ export interface AuthUser {
     sid: string;
     externalIdentifier: string | null;
     locale: string;
+}
+export interface AuthSessionResponse {
+    user: AuthUser;
+    token: string;
 }
 export interface Goal {
     id: string;
@@ -186,6 +197,32 @@ export interface OnboardingState {
     firstDayFlowCompleted: boolean;
     firstDayFlowCompletedAt: string | null;
 }
+export interface AiChatMessage {
+    id: string;
+    role: AiChatRole;
+    content: string;
+    createdAt: string;
+}
+export interface AiChatSession {
+    id: string;
+    kind: AiSessionKind;
+    createdAt: string;
+}
+export interface AiPsychologistSessionResponse {
+    session: AiChatSession;
+    messages: AiChatMessage[];
+}
+export interface AiSendMessageResponse {
+    userMessage: AiChatMessage;
+    assistantMessage: AiChatMessage;
+}
+export interface AiHealthResponse {
+    ok: boolean;
+    enabled: boolean;
+    model: string;
+    available: boolean;
+    error?: string;
+}
 export declare const loginSchema: z.ZodObject<{
     email: z.ZodEmail;
     password: z.ZodString;
@@ -211,8 +248,6 @@ export declare const createGoalSchema: z.ZodObject<{
     parentId: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     nodeType: z.ZodEnum<{
         goal: "goal";
-        milestone: "milestone";
-        project: "project";
         task: "task";
     }>;
     taskType: z.ZodOptional<z.ZodNullable<z.ZodEnum<{
@@ -257,27 +292,17 @@ export declare const createGoalTreeSchema: z.ZodObject<{
         personal: "personal";
     }>;
     deadline: z.ZodNullable<z.ZodISODate>;
-    milestones: z.ZodDefault<z.ZodArray<z.ZodObject<{
+    steps: z.ZodDefault<z.ZodArray<z.ZodObject<{
         title: z.ZodString;
         description: z.ZodDefault<z.ZodString>;
         deadline: z.ZodNullable<z.ZodISODate>;
-        projects: z.ZodDefault<z.ZodArray<z.ZodObject<{
-            title: z.ZodString;
-            description: z.ZodDefault<z.ZodString>;
-            deadline: z.ZodNullable<z.ZodISODate>;
-            tasks: z.ZodDefault<z.ZodArray<z.ZodObject<{
-                title: z.ZodString;
-                description: z.ZodDefault<z.ZodString>;
-                deadline: z.ZodNullable<z.ZodISODate>;
-                taskType: z.ZodEnum<{
-                    learning: "learning";
-                    research: "research";
-                    practice: "practice";
-                    review: "review";
-                    other: "other";
-                }>;
-            }, z.core.$strip>>>;
-        }, z.core.$strip>>>;
+        taskType: z.ZodDefault<z.ZodEnum<{
+            learning: "learning";
+            research: "research";
+            practice: "practice";
+            review: "review";
+            other: "other";
+        }>>;
     }, z.core.$strip>>>;
 }, z.core.$strip>;
 export declare const createHabitSchema: z.ZodObject<{
@@ -378,6 +403,9 @@ export declare const onboardingSetupSchema: z.ZodObject<{
     buildHabits: z.ZodArray<z.ZodString>;
     quitHabits: z.ZodArray<z.ZodString>;
 }, z.core.$strip>;
+export declare const sendAiMessageSchema: z.ZodObject<{
+    content: z.ZodString;
+}, z.core.$strip>;
 export type LoginPayload = z.input<typeof loginSchema>;
 export type RegisterPayload = z.input<typeof registerSchema>;
 export type CreateGoalPayload = z.input<typeof createGoalSchema>;
@@ -392,3 +420,4 @@ export type SaveMorningCheckinPayload = z.input<typeof saveMorningCheckinSchema>
 export type SaveEveningReflectionPayload = z.input<typeof saveEveningReflectionSchema>;
 export type SaveOnboardingProfilePayload = z.input<typeof onboardingProfileSchema>;
 export type SaveOnboardingSetupPayload = z.input<typeof onboardingSetupSchema>;
+export type SendAiMessagePayload = z.input<typeof sendAiMessageSchema>;

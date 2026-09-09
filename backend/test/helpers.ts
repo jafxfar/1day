@@ -16,6 +16,11 @@ export const testConfig: AppConfig = {
     sameSite: 'lax',
     maxAgeMs: 2_592_000_000,
   },
+  ai: {
+    enabled: true,
+    ollamaBaseUrl: 'http://127.0.0.1:11434',
+    ollamaModel: 'qwen3:8b',
+  },
 }
 
 export const createDatabaseStub = (): Database => ({

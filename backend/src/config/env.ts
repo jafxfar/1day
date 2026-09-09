@@ -15,6 +15,9 @@ const envSchema = z.object({
   COOKIE_SECURE: booleanSchema.default(false),
   COOKIE_SAME_SITE: sameSiteSchema.default('lax'),
   COOKIE_MAX_AGE_MS: z.coerce.number().int().positive().default(2_592_000_000),
+  AI_ENABLED: booleanSchema.default(true),
+  OLLAMA_BASE_URL: z.string().url().default('http://127.0.0.1:11434'),
+  OLLAMA_MODEL: z.string().trim().min(1).default('qwen3:8b'),
 })
 
 export interface AppConfig {
@@ -30,6 +33,11 @@ export interface AppConfig {
     secure: boolean
     sameSite: 'lax' | 'strict' | 'none'
     maxAgeMs: number
+  }
+  ai: {
+    enabled: boolean
+    ollamaBaseUrl: string
+    ollamaModel: string
   }
 }
 
@@ -74,6 +82,11 @@ export const parseConfig = (environment: NodeJS.ProcessEnv): AppConfig => {
       secure: parsed.data.COOKIE_SECURE,
       sameSite: parsed.data.COOKIE_SAME_SITE,
       maxAgeMs: parsed.data.COOKIE_MAX_AGE_MS,
+    },
+    ai: {
+      enabled: parsed.data.AI_ENABLED,
+      ollamaBaseUrl: parsed.data.OLLAMA_BASE_URL.replace(/\/$/, ''),
+      ollamaModel: parsed.data.OLLAMA_MODEL,
     },
   }
 }

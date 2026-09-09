@@ -28,6 +28,11 @@ export const apiRoutes = {
     skip: '/api/onboarding/skip',
     firstDayComplete: '/api/onboarding/first-day-complete',
   },
+  ai: {
+    health: '/api/ai/health',
+    psychologistSession: '/api/ai/psychologist/session',
+    psychologistMessages: '/api/ai/psychologist/messages',
+  },
 } as const
 
 export const goalCategories = [
@@ -39,7 +44,7 @@ export const goalCategories = [
   'personal',
 ] as const
 
-export const nodeTypes = ['goal', 'milestone', 'project', 'task'] as const
+export const nodeTypes = ['goal', 'task'] as const
 export const taskTypes = ['learning', 'research', 'practice', 'review', 'other'] as const
 export const habitTypes = ['positive', 'negative'] as const
 export const routineRecurrences = ['daily', 'weekly'] as const
@@ -54,18 +59,16 @@ export type RoutineTimeSlot = typeof routineTimeSlots[number]
 export type CheckinType = 'morning' | 'evening'
 export type OnboardingStatus = 'in_progress' | 'skipped' | 'completed'
 export type CommunicationStyle = 'careful' | 'friendly' | 'mentor' | 'coach'
+export type AiChatRole = 'user' | 'assistant'
+export type AiSessionKind = 'psychologist'
 
 export const childNodeTypeByParent: Record<NodeType, NodeType | null> = {
-  goal: 'milestone',
-  milestone: 'project',
-  project: 'task',
+  goal: 'task',
   task: null,
 }
 
 export const requiredParentNodeType: Record<Exclude<NodeType, 'goal'>, NodeType> = {
-  milestone: 'goal',
-  project: 'milestone',
-  task: 'project',
+  task: 'goal',
 }
 
 export interface AuthUser {
@@ -80,6 +83,11 @@ export interface AuthUser {
   sid: string
   externalIdentifier: string | null
   locale: string
+}
+
+export interface AuthSessionResponse {
+  user: AuthUser
+  token: string
 }
 
 export interface Goal {
@@ -220,6 +228,37 @@ export interface OnboardingState {
   firstDayFlowCompletedAt: string | null
 }
 
+export interface AiChatMessage {
+  id: string
+  role: AiChatRole
+  content: string
+  createdAt: string
+}
+
+export interface AiChatSession {
+  id: string
+  kind: AiSessionKind
+  createdAt: string
+}
+
+export interface AiPsychologistSessionResponse {
+  session: AiChatSession
+  messages: AiChatMessage[]
+}
+
+export interface AiSendMessageResponse {
+  userMessage: AiChatMessage
+  assistantMessage: AiChatMessage
+}
+
+export interface AiHealthResponse {
+  ok: boolean
+  enabled: boolean
+  model: string
+  available: boolean
+  error?: string
+}
+
 const dateSchema = z.iso.date()
 const optionalDateSchema = dateSchema.optional()
 const nullableDateSchema = dateSchema.nullable()
@@ -256,25 +295,11 @@ export const updateGoalSchema = z.object({
   taskType: z.enum(taskTypes).nullable().optional(),
 })
 
-const treeTaskSchema = z.object({
+const treeStepSchema = z.object({
   title: z.string().trim().min(1).max(255),
   description: z.string().trim().max(5000).default(''),
   deadline: nullableDateSchema,
-  taskType: z.enum(taskTypes),
-})
-
-const treeProjectSchema = z.object({
-  title: z.string().trim().min(1).max(255),
-  description: z.string().trim().max(5000).default(''),
-  deadline: nullableDateSchema,
-  tasks: z.array(treeTaskSchema).default([]),
-})
-
-const treeMilestoneSchema = z.object({
-  title: z.string().trim().min(1).max(255),
-  description: z.string().trim().max(5000).default(''),
-  deadline: nullableDateSchema,
-  projects: z.array(treeProjectSchema).default([]),
+  taskType: z.enum(taskTypes).default('other'),
 })
 
 export const createGoalTreeSchema = z.object({
@@ -282,7 +307,7 @@ export const createGoalTreeSchema = z.object({
   description: z.string().trim().max(5000).default(''),
   category: z.enum(goalCategories),
   deadline: nullableDateSchema,
-  milestones: z.array(treeMilestoneSchema).default([]),
+  steps: z.array(treeStepSchema).default([]),
 })
 
 export const createHabitSchema = z.object({
@@ -384,6 +409,10 @@ export const onboardingSetupSchema = z.object({
   quitHabits: z.array(nonEmptyString).max(10),
 })
 
+export const sendAiMessageSchema = z.object({
+  content: z.string().trim().min(1).max(8000),
+})
+
 export type LoginPayload = z.input<typeof loginSchema>
 export type RegisterPayload = z.input<typeof registerSchema>
 export type CreateGoalPayload = z.input<typeof createGoalSchema>
@@ -398,3 +427,4 @@ export type SaveMorningCheckinPayload = z.input<typeof saveMorningCheckinSchema>
 export type SaveEveningReflectionPayload = z.input<typeof saveEveningReflectionSchema>
 export type SaveOnboardingProfilePayload = z.input<typeof onboardingProfileSchema>
 export type SaveOnboardingSetupPayload = z.input<typeof onboardingSetupSchema>
+export type SendAiMessagePayload = z.input<typeof sendAiMessageSchema>
