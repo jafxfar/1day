@@ -33,7 +33,7 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto"; -- provides gen_random_uuid()
 
 -- ---------------------------------------------------------------------------
 -- 1. goals
---    Fixed hierarchy: goal → milestone → project → task
+--    Hierarchy: goal → task (steps)
 --    parent_id is self-referential (SET NULL on parent delete)
 -- ---------------------------------------------------------------------------
 
@@ -56,7 +56,7 @@ CREATE TABLE IF NOT EXISTS goals (
 
   CONSTRAINT goals_progress_range CHECK (progress >= 0 AND progress <= 100),
   CONSTRAINT goals_node_type_check CHECK (
-    node_type IN ('goal', 'milestone', 'project', 'task')
+    node_type IN ('goal', 'task')
   ),
   CONSTRAINT goals_task_type_check CHECK (
     task_type IS NULL OR task_type IN ('learning', 'research', 'practice', 'review', 'other')
@@ -117,6 +117,70 @@ BEGIN
     ALTER TABLE goals ADD CONSTRAINT goals_task_type_check CHECK (
       task_type IS NULL OR task_type IN ('learning', 'research', 'practice', 'review', 'other')
     );
+  END IF;
+END $$;
+
+-- Upgrade path: flatten goal → milestone → project → task into goal → task
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'goals'
+  ) THEN
+    -- Drop old constraint so we can rewrite node types / parents
+    ALTER TABLE goals DROP CONSTRAINT IF EXISTS goals_node_type_check;
+
+    -- Reparent every non-goal node to its root goal
+    WITH RECURSIVE ancestors AS (
+      SELECT id, parent_id, id AS root_id, node_type
+      FROM goals
+      WHERE parent_id IS NULL AND deleted_at IS NULL
+
+      UNION ALL
+
+      SELECT child.id, child.parent_id, ancestors.root_id, child.node_type
+      FROM goals child
+      INNER JOIN ancestors ON child.parent_id = ancestors.id
+      WHERE child.deleted_at IS NULL
+    )
+    UPDATE goals g
+    SET parent_id = ancestors.root_id,
+        updated_at = NOW()
+    FROM ancestors
+    WHERE g.id = ancestors.id
+      AND g.node_type <> 'goal'
+      AND g.parent_id IS DISTINCT FROM ancestors.root_id
+      AND g.deleted_at IS NULL;
+
+    -- Convert milestones / projects into steps under the root
+    UPDATE goals
+    SET node_type = 'task',
+        task_type = COALESCE(task_type, 'other'),
+        updated_at = NOW()
+    WHERE node_type IN ('milestone', 'project');
+
+    -- Soft-delete empty intermediate nodes that had no title
+    UPDATE goals
+    SET deleted_at = COALESCE(deleted_at, NOW()),
+        updated_at = NOW()
+    WHERE node_type = 'task'
+      AND parent_id IS NOT NULL
+      AND trim(title) = ''
+      AND deleted_at IS NULL;
+
+    -- Ensure all tasks have a task_type
+    UPDATE goals
+    SET task_type = 'other'
+    WHERE node_type = 'task' AND task_type IS NULL;
+
+    IF NOT EXISTS (
+      SELECT 1 FROM pg_constraint
+      WHERE conname = 'goals_node_type_check' AND conrelid = 'goals'::regclass
+    ) THEN
+      ALTER TABLE goals ADD CONSTRAINT goals_node_type_check CHECK (
+        node_type IN ('goal', 'task')
+      );
+    END IF;
   END IF;
 END $$;
 
@@ -338,7 +402,41 @@ CREATE INDEX IF NOT EXISTS idx_routines_user_active
   WHERE deleted_at IS NULL;
 
 
+-- ---------------------------------------------------------------------------
+-- 8. ai_chat_sessions / ai_chat_messages
+--    Local AI psychologist chat history (one active session per kind/user).
+-- ---------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS ai_chat_sessions (
+  id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id    INTEGER     NOT NULL REFERENCES lifeos_users(id) ON DELETE CASCADE,
+  kind       VARCHAR(40) NOT NULL DEFAULT 'psychologist',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+  CONSTRAINT ai_chat_sessions_kind_check CHECK (kind IN ('psychologist'))
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_ai_chat_sessions_user_kind
+  ON ai_chat_sessions(user_id, kind);
+
+CREATE TABLE IF NOT EXISTS ai_chat_messages (
+  id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  session_id UUID        NOT NULL REFERENCES ai_chat_sessions(id) ON DELETE CASCADE,
+  user_id    INTEGER     NOT NULL REFERENCES lifeos_users(id) ON DELETE CASCADE,
+  role       VARCHAR(20) NOT NULL,
+  content    TEXT        NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+  CONSTRAINT ai_chat_messages_role_check CHECK (role IN ('user', 'assistant', 'system'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_ai_chat_messages_session
+  ON ai_chat_messages(session_id, created_at ASC);
+
+
 -- =============================================================================
 -- Migration complete.
--- Tables: goals, habits, habit_logs, journal_entries, day_checkins, routines
+-- Tables: goals, habits, habit_logs, journal_entries, day_checkins, routines,
+--         ai_chat_sessions, ai_chat_messages
 -- =============================================================================

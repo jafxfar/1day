@@ -1,22 +1,19 @@
 import {
   apiRoutes,
+  type AuthSessionResponse,
   type AuthUser,
   type LoginPayload,
   type RegisterPayload,
 } from '@life-os/contracts'
 import { request } from '../../../shared/api/client'
 
-type AuthResponse = {
-  user: AuthUser
-}
-
 export const authApi = {
   getCurrentUser: () => request<AuthUser>(apiRoutes.auth.me),
-  login: (payload: LoginPayload) => request<AuthResponse>(apiRoutes.auth.login, {
+  login: (payload: LoginPayload) => request<AuthSessionResponse>(apiRoutes.auth.login, {
     method: 'POST',
     body: payload,
   }),
-  register: (payload: RegisterPayload) => request<AuthResponse>(apiRoutes.auth.register, {
+  register: (payload: RegisterPayload) => request<AuthSessionResponse>(apiRoutes.auth.register, {
     method: 'POST',
     body: payload,
   }),

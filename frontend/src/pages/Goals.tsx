@@ -5,7 +5,6 @@ import type {
   Routine,
   RoutineRecurrence,
   RoutineTimeSlot,
-  TaskType,
 } from '@life-os/contracts'
 import { childNodeTypeByParent } from '@life-os/contracts'
 import { useEffect, useMemo, useState } from 'react'
@@ -37,8 +36,6 @@ import {
   CheckCircle2,
   TrendingUp,
   Target,
-  Flag,
-  FolderKanban,
   ListChecks,
   Repeat,
 } from 'lucide-react'
@@ -62,18 +59,8 @@ const CAT_CONFIG: Record<GoalCategory, CatConfig> = {
 }
 
 const NODE_CONFIG: Record<NodeType, NodeConf> = {
-  goal: { label: 'Goal', icon: Target, childLabel: 'Milestone', childType: 'milestone' },
-  milestone: { label: 'Milestone', icon: Flag, childLabel: 'Project', childType: 'project' },
-  project: { label: 'Project', icon: FolderKanban, childLabel: 'Task', childType: 'task' },
-  task: { label: 'Task', icon: ListChecks, childLabel: null, childType: null },
-}
-
-const TASK_TYPE_LABELS: Record<TaskType, string> = {
-  learning: 'Learning',
-  research: 'Research',
-  practice: 'Practice',
-  review: 'Review',
-  other: 'Other',
+  goal: { label: 'Goal', icon: Target, childLabel: 'Step', childType: 'task' },
+  task: { label: 'Step', icon: ListChecks, childLabel: null, childType: null },
 }
 
 const CATEGORIES = Object.entries(CAT_CONFIG) as [GoalCategory, CatConfig][]
@@ -168,7 +155,7 @@ export default function Goals() {
       deadline: deadline || null,
       parentId: parentGoal?.id ?? null,
       nodeType: childNodeType,
-      taskType: childNodeType === 'task' ? taskType : null,
+      taskType: childNodeType === 'task' ? 'other' : null,
     })
 
     if (newGoal) {
@@ -293,7 +280,7 @@ export default function Goals() {
             <Button asChild size="sm" className="pressable h-11 rounded-2xl px-4">
               <Link to="/goals/new">
                 <Plus className="w-4 h-4" />
-                Builder
+                New goal
               </Link>
             </Button>
           ) : (
@@ -316,7 +303,7 @@ export default function Goals() {
             )}
             onClick={() => setTab('goals')}
           >
-            Tree
+            Goals
           </button>
           <button
             type="button"
@@ -355,10 +342,10 @@ export default function Goals() {
                 <Target className="mb-4 h-12 w-12 text-primary/60" />
                 <p className="font-semibold text-foreground">No goals yet</p>
                 <p className="mt-1 max-w-xs text-sm text-muted-foreground">
-                  Build a Goal → Milestone → Project → Task tree manually in Goal Builder.
+                  Create a simple goal, then break it into steps if you need to.
                 </p>
                 <Button asChild className="pressable mt-6 rounded-2xl">
-                  <Link to="/goals/new">Open Goal Builder</Link>
+                  <Link to="/goals/new">Create a goal</Link>
                 </Button>
               </div>
             )}
@@ -495,16 +482,6 @@ export default function Goals() {
                 <SelectContent>
                   {CATEGORIES.map(([value, config]) => (
                     <SelectItem key={value} value={value}>{config.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-            {childNodeType === 'task' && (
-              <Select value={taskType} onValueChange={value => setTaskType(value as TaskType)}>
-                <SelectTrigger className="rounded-2xl" aria-label="Task type"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {(Object.entries(TASK_TYPE_LABELS) as [TaskType, string][]).map(([value, label]) => (
-                    <SelectItem key={value} value={value}>{label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -679,11 +656,6 @@ const GoalCard = ({
                 {node.nodeType === 'goal' && (
                   <span className="inline-flex items-center rounded-md bg-background/10 px-2 py-0.5 text-[10px] font-medium text-background/65">
                     {catCfg.label}
-                  </span>
-                )}
-                {node.nodeType === 'task' && node.taskType && (
-                  <span className="inline-flex items-center rounded-md bg-background/10 px-2 py-0.5 text-[10px] font-medium text-background/65">
-                    {TASK_TYPE_LABELS[node.taskType]}
                   </span>
                 )}
               </div>

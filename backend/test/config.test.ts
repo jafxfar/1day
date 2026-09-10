@@ -17,6 +17,11 @@ describe('parseConfig', () => {
       'http://localhost:5173',
       'https://life.example.com',
     ])
+    expect(config.ai).toEqual({
+      enabled: true,
+      ollamaBaseUrl: 'http://127.0.0.1:11434',
+      ollamaModel: 'qwen3:8b',
+    })
   })
 
   it('rejects missing secrets and database settings', () => {

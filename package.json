@@ -4,6 +4,7 @@
   "packageManager": "pnpm@10.16.1",
   "scripts": {
     "dev": "pnpm --parallel --filter frontend --filter backend dev",
+    "dev:mobile": "pnpm --filter mobile start",
     "build": "pnpm --filter @life-os/contracts build && pnpm --filter backend build && pnpm --filter frontend build",
     "lint": "pnpm --recursive lint",
     "test": "pnpm --recursive test",

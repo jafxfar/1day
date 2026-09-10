@@ -15,8 +15,7 @@ import type { CreateGoalValues, GoalsRepository } from './goals.repository.js'
 
 const assertTaskType = (nodeType: NodeType, taskType: TaskType | null | undefined) => {
   if (nodeType === 'task') {
-    if (!taskType) throw new AppError(400, 'Tasks require a task type')
-    return taskType
+    return taskType ?? 'other'
   }
   if (taskType) throw new AppError(400, 'Only tasks can have a task type')
   return null
@@ -68,7 +67,7 @@ export const createGoalsService = (repository: GoalsRepository) => ({
 
     const pending: PendingNode[] = []
     const rootTempId = 'root'
-    const milestones = payload.milestones ?? []
+    const steps = payload.steps ?? []
 
     pending.push({
       tempId: rootTempId,
@@ -83,52 +82,18 @@ export const createGoalsService = (repository: GoalsRepository) => ({
       },
     })
 
-    milestones.forEach((milestone, milestoneIndex) => {
-      const milestoneTempId = `m-${milestoneIndex}`
-      const projects = milestone.projects ?? []
+    steps.forEach((step, stepIndex) => {
       pending.push({
-        tempId: milestoneTempId,
+        tempId: `s-${stepIndex}`,
         parentTempId: rootTempId,
         values: {
-          title: milestone.title,
-          description: milestone.description ?? '',
+          title: step.title,
+          description: step.description ?? '',
           category: payload.category,
-          deadline: milestone.deadline,
-          nodeType: 'milestone',
-          taskType: null,
+          deadline: step.deadline,
+          nodeType: 'task',
+          taskType: step.taskType ?? 'other',
         },
-      })
-
-      projects.forEach((project, projectIndex) => {
-        const projectTempId = `p-${milestoneIndex}-${projectIndex}`
-        const tasks = project.tasks ?? []
-        pending.push({
-          tempId: projectTempId,
-          parentTempId: milestoneTempId,
-          values: {
-            title: project.title,
-            description: project.description ?? '',
-            category: payload.category,
-            deadline: project.deadline,
-            nodeType: 'project',
-            taskType: null,
-          },
-        })
-
-        tasks.forEach((task, taskIndex) => {
-          pending.push({
-            tempId: `t-${milestoneIndex}-${projectIndex}-${taskIndex}`,
-            parentTempId: projectTempId,
-            values: {
-              title: task.title,
-              description: task.description ?? '',
-              category: payload.category,
-              deadline: task.deadline,
-              nodeType: 'task',
-              taskType: task.taskType,
-            },
-          })
-        })
       })
     })
 
