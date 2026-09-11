@@ -1,11 +1,12 @@
 import 'react-native-gesture-handler'
 import { Stack, useRouter, useSegments } from 'expo-router'
-import { useEffect, type ReactNode } from 'react'
-import { ActivityIndicator, StyleSheet, View } from 'react-native'
+import { useEffect, useState, type ReactNode } from 'react'
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
 import { SessionProvider } from '../src/auth/SessionProvider'
 import { useSession } from '../src/auth/useSession'
 import { CheckinsProvider } from '../src/checkins/CheckinsProvider'
+import { getDatabase } from '../src/db/client'
 import { OnboardingProvider } from '../src/onboarding/OnboardingProvider'
 import { useOnboarding } from '../src/onboarding/useOnboarding'
 import { resolvePostAuthHref } from '../src/onboarding/resolvePostAuthHref'
@@ -106,6 +107,42 @@ const AuthGate = ({ children }: { children: ReactNode }) => {
 }
 
 export default function RootLayout() {
+  const [dbReady, setDbReady] = useState(false)
+  const [dbError, setDbError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    void (async () => {
+      try {
+        await getDatabase()
+        if (!cancelled) setDbReady(true)
+      } catch (error) {
+        if (!cancelled) {
+          setDbError(error instanceof Error ? error.message : 'Failed to open local database')
+        }
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  if (dbError) {
+    return (
+      <View style={styles.loading}>
+        <Text style={styles.errorText}>{dbError}</Text>
+      </View>
+    )
+  }
+
+  if (!dbReady) {
+    return (
+      <View style={styles.loading}>
+        <ActivityIndicator size="large" color="#D7FF35" />
+      </View>
+    )
+  }
+
   return (
     <SessionProvider>
       <OnboardingProvider>
@@ -126,5 +163,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#141414',
+    paddingHorizontal: 24,
+  },
+  errorText: {
+    color: '#F5F5F5',
+    textAlign: 'center',
+    fontSize: 16,
   },
 })

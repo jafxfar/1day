@@ -1,26 +1,17 @@
+import type { CreateJournalEntryPayload, JournalEntry } from '@life-os/contracts'
 import {
-  apiRoutes,
-  type CreateJournalEntryPayload,
-  type JournalEntry,
-} from '@life-os/contracts'
-import { request } from '../api/client'
+  journalRepository,
+  type GetJournalEntriesPayload,
+} from '../data/journalRepository'
 
-export type GetJournalEntriesPayload = {
-  limit?: number
-  offset?: number
-}
+export type { GetJournalEntriesPayload }
 
 export const journalApi = {
-  getAll: (payload: GetJournalEntriesPayload = {}) => request<JournalEntry[]>(
-    apiRoutes.journal,
-    { query: { ...payload } },
+  getAll: (payload: GetJournalEntriesPayload = {}): Promise<JournalEntry[]> => (
+    journalRepository.getAll(payload)
   ),
-  create: (payload: CreateJournalEntryPayload) => request<JournalEntry>(apiRoutes.journal, {
-    method: 'POST',
-    body: payload,
-  }),
-  delete: (id: string) => request<{ success: boolean; id: string }>(
-    `${apiRoutes.journal}/${encodeURIComponent(id)}`,
-    { method: 'DELETE' },
+  create: (payload: CreateJournalEntryPayload): Promise<JournalEntry> => (
+    journalRepository.create(payload)
   ),
+  delete: (id: string): Promise<{ success: boolean; id: string }> => journalRepository.delete(id),
 }
