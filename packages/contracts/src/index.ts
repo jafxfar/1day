@@ -71,19 +71,6 @@ export const requiredParentNodeType: Record<Exclude<NodeType, 'goal'>, NodeType>
   task: 'goal',
 }
 
-export const childNodeTypeByParent: Record<NodeType, NodeType | null> = {
-  goal: 'milestone',
-  milestone: 'project',
-  project: 'task',
-  task: null,
-}
-
-export const requiredParentNodeType: Record<Exclude<NodeType, 'goal'>, NodeType> = {
-  milestone: 'goal',
-  project: 'milestone',
-  task: 'project',
-}
-
 export interface AuthUser {
   id: number
   email: string

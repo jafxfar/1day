@@ -112,7 +112,6 @@ export default function Goals() {
   const [description, setDescription] = useState('')
   const [category, setCategory] = useState<GoalCategory>('personal')
   const [deadline, setDeadline] = useState('')
-  const [taskType, setTaskType] = useState<TaskType>('learning')
 
   const [routineDialogOpen, setRoutineDialogOpen] = useState(false)
   const [routineTitle, setRoutineTitle] = useState('')
@@ -141,7 +140,6 @@ export default function Goals() {
     setDescription('')
     setCategory(parent?.category ?? 'personal')
     setDeadline('')
-    setTaskType('learning')
     setDialogOpen(true)
   }
 
