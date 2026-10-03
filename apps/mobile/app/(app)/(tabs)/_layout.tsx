@@ -4,8 +4,11 @@ import { CustomTabBar } from '@/ui/AppTabBar'
 export default function TabsLayout() {
   return (
     <Tabs
-      tabBar={(props: Parameters<typeof CustomTabBar>[0]) => (
-        <CustomTabBar state={props.state} navigation={props.navigation} />
+      tabBar={(props) => (
+        <CustomTabBar
+          state={props.state}
+          navigation={props.navigation as Parameters<typeof CustomTabBar>[0]['navigation']}
+        />
       )}
       screenOptions={{ headerShown: false }}
     >

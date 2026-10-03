@@ -1,31 +1,15 @@
-import {
-  apiRoutes,
-  type CreateGoalPayload,
-  type CreateGoalTreePayload,
-  type Goal,
-  type UpdateGoalPayload,
+import type {
+  CreateGoalPayload,
+  CreateGoalTreePayload,
+  Goal,
+  UpdateGoalPayload,
 } from '@life-os/contracts'
-import { request } from '../api/client'
+import { goalsRepository } from '../data/goalsRepository'
 
 export const goalsApi = {
-  getAll: () => request<Goal[]>(apiRoutes.goals),
-  create: (payload: CreateGoalPayload) => request<Goal>(apiRoutes.goals, {
-    method: 'POST',
-    body: payload,
-  }),
-  createTree: (payload: CreateGoalTreePayload) => request<Goal[]>(apiRoutes.goalsTree, {
-    method: 'POST',
-    body: payload,
-  }),
-  update: (id: string, payload: UpdateGoalPayload) => request<Goal>(
-    `${apiRoutes.goals}/${encodeURIComponent(id)}`,
-    {
-      method: 'PATCH',
-      body: payload,
-    },
-  ),
-  delete: (id: string) => request<{ success: boolean; id: string }>(
-    `${apiRoutes.goals}/${encodeURIComponent(id)}`,
-    { method: 'DELETE' },
-  ),
+  getAll: (): Promise<Goal[]> => goalsRepository.getAll(),
+  create: (payload: CreateGoalPayload): Promise<Goal> => goalsRepository.create(payload),
+  createTree: (payload: CreateGoalTreePayload): Promise<Goal[]> => goalsRepository.createTree(payload),
+  update: (id: string, payload: UpdateGoalPayload): Promise<Goal> => goalsRepository.update(id, payload),
+  delete: (id: string): Promise<{ success: boolean; id: string }> => goalsRepository.delete(id),
 }

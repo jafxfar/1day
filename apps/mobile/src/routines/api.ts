@@ -1,26 +1,15 @@
-import {
-  apiRoutes,
-  type CreateRoutinePayload,
-  type Routine,
-  type UpdateRoutinePayload,
+import type {
+  CreateRoutinePayload,
+  Routine,
+  UpdateRoutinePayload,
 } from '@life-os/contracts'
-import { request } from '../api/client'
+import { routinesRepository } from '../data/routinesRepository'
 
 export const routinesApi = {
-  getAll: () => request<Routine[]>(apiRoutes.routines),
-  create: (payload: CreateRoutinePayload) => request<Routine>(apiRoutes.routines, {
-    method: 'POST',
-    body: payload,
-  }),
-  update: (id: string, payload: UpdateRoutinePayload) => request<Routine>(
-    `${apiRoutes.routines}/${encodeURIComponent(id)}`,
-    {
-      method: 'PATCH',
-      body: payload,
-    },
+  getAll: (): Promise<Routine[]> => routinesRepository.getAll(),
+  create: (payload: CreateRoutinePayload): Promise<Routine> => routinesRepository.create(payload),
+  update: (id: string, payload: UpdateRoutinePayload): Promise<Routine> => (
+    routinesRepository.update(id, payload)
   ),
-  delete: (id: string) => request<{ success: boolean; id: string }>(
-    `${apiRoutes.routines}/${encodeURIComponent(id)}`,
-    { method: 'DELETE' },
-  ),
+  delete: (id: string): Promise<{ success: boolean; id: string }> => routinesRepository.delete(id),
 }

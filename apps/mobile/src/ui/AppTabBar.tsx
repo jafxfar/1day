@@ -27,7 +27,7 @@ type TabBarProps = {
   }
   navigation: {
     emit: (event: {
-      type: string
+      type: 'tabPress'
       target: string
       canPreventDefault: boolean
     }) => { defaultPrevented: boolean }

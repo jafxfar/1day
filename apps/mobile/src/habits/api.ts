@@ -1,29 +1,14 @@
+import type { CreateHabitPayload, Habit } from '@life-os/contracts'
 import {
-  apiRoutes,
-  type CreateHabitPayload,
-  type Habit,
-} from '@life-os/contracts'
-import { request } from '../api/client'
+  habitsRepository,
+  type ToggleHabitResponse,
+} from '../data/habitsRepository'
 
-export type ToggleHabitResponse = {
-  habitId: string
-  completedToday: boolean
-  currentStreak: number
-  longestStreak: number
-}
+export type { ToggleHabitResponse }
 
 export const habitsApi = {
-  getAll: () => request<Habit[]>(apiRoutes.habits),
-  create: (payload: CreateHabitPayload) => request<Habit>(apiRoutes.habits, {
-    method: 'POST',
-    body: payload,
-  }),
-  toggle: (habitId: string) => request<ToggleHabitResponse>(
-    `${apiRoutes.habits}/${encodeURIComponent(habitId)}/toggle`,
-    { method: 'POST' },
-  ),
-  delete: (id: string) => request<{ success: boolean; id: string }>(
-    `${apiRoutes.habits}/${encodeURIComponent(id)}`,
-    { method: 'DELETE' },
-  ),
+  getAll: (): Promise<Habit[]> => habitsRepository.getAll(),
+  create: (payload: CreateHabitPayload): Promise<Habit> => habitsRepository.create(payload),
+  toggle: (habitId: string): Promise<ToggleHabitResponse> => habitsRepository.toggle(habitId),
+  delete: (id: string): Promise<{ success: boolean; id: string }> => habitsRepository.delete(id),
 }
