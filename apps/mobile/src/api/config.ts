@@ -34,7 +34,7 @@ const hostFromExpoDebugger = (): string | null => {
   return null
 }
 
-const resolveApiBaseUrl = (): string => {
+export const getDefaultApiBaseUrl = (): string => {
   const fromEnv = normalizeExplicitUrl(process.env.EXPO_PUBLIC_API_URL)
   if (fromEnv) {
     return fromEnv
@@ -58,6 +58,61 @@ const resolveApiBaseUrl = (): string => {
   return `http://localhost:${DEFAULT_API_PORT}`
 }
 
-export const API_BASE_URL = resolveApiBaseUrl()
+const HEALTH_TIMEOUT_MS = 5_000
+
+let overrideUrl: string | null = null
+
+export const getApiBaseUrl = (): string => overrideUrl ?? getDefaultApiBaseUrl()
+
+export const setApiBaseUrlOverride = (url: string | null) => {
+  overrideUrl = url
+}
+
+export const normalizeApiBaseUrl = (input: string): string => {
+  const trimmed = input.trim()
+  if (!trimmed) {
+    throw new Error('Enter the server address')
+  }
+
+  const withScheme = /^[a-z][a-z\d+.-]*:\/\//i.test(trimmed) ? trimmed : `http://${trimmed}`
+
+  // React Native's URL does not implement protocol/host/pathname getters, so parse manually
+  const match = withScheme.match(/^([a-z][a-z\d+.-]*):\/\/([^/?#\s]+)([^?#\s]*)$/i)
+  if (!match) {
+    throw new Error('Invalid server address')
+  }
+
+  const [, scheme, host, rawPath] = match
+  const protocol = scheme.toLowerCase()
+  if (protocol !== 'http' && protocol !== 'https') {
+    throw new Error('Server address must start with http:// or https://')
+  }
+
+  if (!/^(\[[\da-f:.]+\]|[a-z\d.-]+)(:\d{1,5})?$/i.test(host)) {
+    throw new Error('Invalid server address')
+  }
+
+  const path = rawPath.replace(/\/+$/, '').replace(/\/api$/i, '')
+  return `${protocol}://${host.toLowerCase()}${path}`
+}
+
+export const checkApiHealth = async (baseUrl: string): Promise<void> => {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), HEALTH_TIMEOUT_MS)
+
+  let response: Response
+  try {
+    response = await fetch(`${baseUrl}/api/health`, { signal: controller.signal })
+  } catch {
+    throw new Error(`Server is not reachable: ${baseUrl}`)
+  } finally {
+    clearTimeout(timer)
+  }
+
+  const payload = await response.json().catch(() => null) as { ok?: unknown } | null
+  if (!response.ok || payload?.ok !== true) {
+    throw new Error(`This address does not look like a Life OS server: ${baseUrl}`)
+  }
+}
 
 export { apiRoutes } from '@life-os/contracts'

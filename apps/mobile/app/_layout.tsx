@@ -3,6 +3,7 @@ import { Stack, useRouter, useSegments } from 'expo-router'
 import { useEffect, type ReactNode } from 'react'
 import { ActivityIndicator, StyleSheet, View } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
+import { ApiConfigProvider } from '../src/api/ApiConfigProvider'
 import { SessionProvider } from '../src/auth/SessionProvider'
 import { useSession } from '../src/auth/useSession'
 import { CheckinsProvider } from '../src/checkins/CheckinsProvider'
@@ -107,16 +108,18 @@ const AuthGate = ({ children }: { children: ReactNode }) => {
 
 export default function RootLayout() {
   return (
-    <SessionProvider>
-      <OnboardingProvider>
-        <CheckinsProvider>
-          <StatusBar style="light" />
-          <AuthGate>
-            <Stack screenOptions={{ headerShown: false }} />
-          </AuthGate>
-        </CheckinsProvider>
-      </OnboardingProvider>
-    </SessionProvider>
+    <ApiConfigProvider>
+      <SessionProvider>
+        <OnboardingProvider>
+          <CheckinsProvider>
+            <StatusBar style="light" />
+            <AuthGate>
+              <Stack screenOptions={{ headerShown: false }} />
+            </AuthGate>
+          </CheckinsProvider>
+        </OnboardingProvider>
+      </SessionProvider>
+    </ApiConfigProvider>
   )
 }
 

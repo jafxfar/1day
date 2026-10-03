@@ -24,7 +24,7 @@ import {
   LogOut,
   Moon,
   ScrollText,
-  Settings,
+  Server,
   Target,
   TrendingUp,
 } from 'lucide-react-native'
@@ -33,6 +33,7 @@ import { useCheckins } from '@/checkins/useCheckins'
 import { goalsApi } from '@/goals/api'
 import { habitsApi } from '@/habits/api'
 import { journalApi } from '@/journal/api'
+import { ServerUrlModal } from '@/ui/ServerUrlModal'
 
 export default function ProfileScreen() {
   const router = useRouter()
@@ -42,6 +43,7 @@ export default function ProfileScreen() {
   const [habits, setHabits] = useState<Habit[]>([])
   const [entries, setEntries] = useState<JournalEntry[]>([])
   const [loading, setLoading] = useState(true)
+  const [isServerModalOpen, setIsServerModalOpen] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -62,6 +64,11 @@ export default function ProfileScreen() {
   useEffect(() => {
     void load()
   }, [load])
+
+  const handleServerChanged = async () => {
+    await logout()
+    router.replace('/(public)/introduction')
+  }
 
   const userName = user?.firstName ?? 'Friend'
   const userInitial = (user?.firstName?.[0] ?? '?').toUpperCase()
@@ -87,7 +94,7 @@ export default function ProfileScreen() {
     { icon: Bell, label: 'Notifications', onPress: () => {} },
     { icon: Moon, label: 'Appearance', onPress: () => {} },
     { icon: Lock, label: 'Privacy', onPress: () => {} },
-    { icon: Settings, label: 'Settings', onPress: () => {} },
+    { icon: Server, label: 'Server', onPress: () => setIsServerModalOpen(true) },
     {
       icon: LogOut,
       label: 'Log Out',
@@ -201,6 +208,12 @@ export default function ProfileScreen() {
           })}
         </View>
       </ScrollView>
+
+      <ServerUrlModal
+        visible={isServerModalOpen}
+        onClose={() => setIsServerModalOpen(false)}
+        onChanged={handleServerChanged}
+      />
     </SafeAreaView>
   )
 }

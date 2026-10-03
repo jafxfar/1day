@@ -1,4 +1,4 @@
-import { API_BASE_URL } from './config'
+import { getApiBaseUrl } from './config'
 import { tokenStore } from '../auth/tokenStore'
 
 type QueryValue = string | number | boolean | null | undefined
@@ -24,7 +24,7 @@ export class ApiError extends Error {
 }
 
 const buildUrl = (path: string, query?: Record<string, QueryValue>): string => {
-  const url = new URL(path, `${API_BASE_URL}/`)
+  const url = new URL(path, `${getApiBaseUrl()}/`)
 
   Object.entries(query ?? {}).forEach(([key, value]) => {
     if (value !== null && value !== undefined) {
@@ -81,7 +81,7 @@ export const request = async <T>(
     })
   } catch {
     throw new ApiError(
-      `Network unavailable. Check API URL and connection. (${API_BASE_URL})`,
+      `Network unavailable. Check API URL and connection. (${getApiBaseUrl()})`,
       0,
     )
   }

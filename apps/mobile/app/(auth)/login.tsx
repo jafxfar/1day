@@ -11,9 +11,13 @@ import {
   View,
 } from 'react-native'
 import { useRouter, useLocalSearchParams } from 'expo-router'
-import { ArrowLeft, Sparkles } from 'lucide-react-native'
+import { ArrowLeft, ChevronRight, Server, Sparkles } from 'lucide-react-native'
 
+import { useApiConfig } from '@/api/useApiConfig'
 import { useSession } from '@/auth/useSession'
+import { ServerUrlModal } from '@/ui/ServerUrlModal'
+
+const toHostLabel = (url: string) => url.replace(/^https?:\/\//, '')
 
 export default function Auth() {
   const router = useRouter()
@@ -22,6 +26,8 @@ export default function Auth() {
   const redirectPath = redirect ?? '/(app)/morning'
 
   const { login, register } = useSession()
+  const { apiBaseUrl, isCustom } = useApiConfig()
+  const [isServerModalOpen, setIsServerModalOpen] = useState(false)
 
   const [isLogin, setIsLogin] = useState(true)
   const [email, setEmail] = useState('')
@@ -288,9 +294,34 @@ export default function Auth() {
                 )}
               </Pressable>
             </View>
+
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Server ${apiBaseUrl}. Change server address`}
+              onPress={() => setIsServerModalOpen(true)}
+              disabled={loading}
+              style={({ pressed }) => [
+                styles.serverRow,
+                pressed && styles.pressed,
+              ]}
+            >
+              <Server size={16} color="#92928D" />
+              <Text style={styles.serverLabel}>Server</Text>
+              <Text style={styles.serverValue} numberOfLines={1}>
+                {toHostLabel(apiBaseUrl)}
+                {isCustom ? '' : ' (auto)'}
+              </Text>
+              <ChevronRight size={16} color="#92928D" />
+            </Pressable>
           </View>
         </View>
       </ScrollView>
+
+      <ServerUrlModal
+        visible={isServerModalOpen}
+        onClose={() => setIsServerModalOpen(false)}
+        onChanged={() => setError(null)}
+      />
     </KeyboardAvoidingView>
   )
 }
@@ -490,6 +521,32 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+  },
+
+  serverRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+  },
+
+  serverLabel: {
+    color: '#92928D',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+
+  serverValue: {
+    flex: 1,
+    color: '#F4F4F0',
+    fontSize: 13,
+    fontWeight: '600',
+    textAlign: 'right',
   },
 
   pressed: {
