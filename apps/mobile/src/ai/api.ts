@@ -1,26 +1,20 @@
-import {
-  apiRoutes,
-  type AiHealthResponse,
-  type AiPsychologistSessionResponse,
-  type AiSendMessageResponse,
-  type SendAiMessagePayload,
+import type {
+  AiHealthResponse,
+  AiPsychologistSessionResponse,
+  AiSendMessageResponse,
+  SendAiMessagePayload,
 } from '@life-os/contracts'
-import { request } from '../api/client'
+import { aiRepository } from '../data/aiRepository'
 
 export const aiApi = {
-  health: () => request<AiHealthResponse>(apiRoutes.ai.health),
-  getPsychologistSession: () => request<AiPsychologistSessionResponse>(
-    apiRoutes.ai.psychologistSession,
+  health: (): Promise<AiHealthResponse> => aiRepository.health(),
+  getPsychologistSession: (): Promise<AiPsychologistSessionResponse> => (
+    aiRepository.getPsychologistSession()
   ),
-  sendPsychologistMessage: (payload: SendAiMessagePayload) => request<AiSendMessageResponse>(
-    apiRoutes.ai.psychologistMessages,
-    {
-      method: 'POST',
-      body: payload,
-    },
+  sendPsychologistMessage: (payload: SendAiMessagePayload): Promise<AiSendMessageResponse> => (
+    aiRepository.sendPsychologistMessage(payload)
   ),
-  clearPsychologistSession: () => request<{ success: true }>(
-    apiRoutes.ai.psychologistSession,
-    { method: 'DELETE' },
+  clearPsychologistSession: (): Promise<{ success: true }> => (
+    aiRepository.clearPsychologistSession()
   ),
 }

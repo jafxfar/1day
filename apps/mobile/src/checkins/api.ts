@@ -1,27 +1,18 @@
-import {
-  apiRoutes,
-  type EveningReflection,
-  type MorningCheckin,
-  type SaveEveningReflectionPayload,
-  type SaveMorningCheckinPayload,
-  type TodayCheckins,
+import type {
+  EveningReflection,
+  MorningCheckin,
+  SaveEveningReflectionPayload,
+  SaveMorningCheckinPayload,
+  TodayCheckins,
 } from '@life-os/contracts'
-import { request } from '../api/client'
+import { checkinsRepository } from '../data/checkinsRepository'
 
 export const checkinsApi = {
-  getToday: () => request<TodayCheckins>(apiRoutes.checkins.today),
-  saveMorning: (payload: SaveMorningCheckinPayload) => request<MorningCheckin>(
-    apiRoutes.checkins.morning,
-    {
-      method: 'POST',
-      body: payload,
-    },
+  getToday: (): Promise<TodayCheckins> => checkinsRepository.getToday(),
+  saveMorning: (payload: SaveMorningCheckinPayload): Promise<MorningCheckin> => (
+    checkinsRepository.saveMorning(payload)
   ),
-  saveEvening: (payload: SaveEveningReflectionPayload) => request<EveningReflection>(
-    apiRoutes.checkins.evening,
-    {
-      method: 'POST',
-      body: payload,
-    },
+  saveEvening: (payload: SaveEveningReflectionPayload): Promise<EveningReflection> => (
+    checkinsRepository.saveEvening(payload)
   ),
 }

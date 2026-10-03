@@ -1,6 +1,6 @@
-import { apiRoutes, type BiographyDay } from '@life-os/contracts'
-import { request } from '../api/client'
+import type { BiographyDay } from '@life-os/contracts'
+import { biographyRepository } from '../data/biographyRepository'
 
 export const biographyApi = {
-  getAll: () => request<BiographyDay[]>(apiRoutes.biography),
+  getAll: (): Promise<BiographyDay[]> => biographyRepository.getAll(),
 }

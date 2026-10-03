@@ -1,23 +1,14 @@
-import {
-  apiRoutes,
-  type AuthSessionResponse,
-  type AuthUser,
-  type LoginPayload,
-  type RegisterPayload,
+import type {
+  AuthSessionResponse,
+  AuthUser,
+  LoginPayload,
+  RegisterPayload,
 } from '@life-os/contracts'
-import { request } from '../api/client'
+import { authRepository } from '../data/authRepository'
 
 export const authApi = {
-  getCurrentUser: () => request<AuthUser>(apiRoutes.auth.me),
-  login: (payload: LoginPayload) => request<AuthSessionResponse>(apiRoutes.auth.login, {
-    method: 'POST',
-    body: payload,
-  }),
-  register: (payload: RegisterPayload) => request<AuthSessionResponse>(apiRoutes.auth.register, {
-    method: 'POST',
-    body: payload,
-  }),
-  logout: () => request<{ ok: boolean }>(apiRoutes.auth.logout, {
-    method: 'POST',
-  }),
+  getCurrentUser: (): Promise<AuthUser> => authRepository.getCurrentUser(),
+  login: (payload: LoginPayload): Promise<AuthSessionResponse> => authRepository.login(payload),
+  register: (payload: RegisterPayload): Promise<AuthSessionResponse> => authRepository.register(payload),
+  logout: (): Promise<{ ok: boolean }> => authRepository.logout(),
 }
